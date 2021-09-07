@@ -1,6 +1,6 @@
 #pragma once
-#include <H5Cpp.h>
 #include <string>
+#include <H5Cpp.h>
 
 using namespace H5;
 
@@ -8,7 +8,7 @@ struct Storage
 {
     H5File file;
 
-    Storage() : file {"gravity0.h5", H5F_ACC_TRUNC}
+    Storage(const char* name) : file {name, H5F_ACC_TRUNC}
     {
     }
 

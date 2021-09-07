@@ -4,8 +4,9 @@ project(gravity0)
 
 find_package(HDF5 REQUIRED COMPONENTS CXX HL)
 
-add_executable(gravity0 src/main.cc)
-set_property(TARGET gravity0 PROPERTY CXX_STANDARD 17)
+add_executable(direct_verlet src/solvers/direct_verlet.cc)
+set_property(TARGET direct_verlet PROPERTY CXX_STANDARD 17)
 
-target_include_directories(gravity0 PRIVATE ${HDF5_CXX_INCLUDE_DIRS})
-target_link_libraries(gravity0 PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+include_directories(${HDF5_CXX_INCLUDE_DIRS})
+
+target_link_libraries(direct_verlet PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})

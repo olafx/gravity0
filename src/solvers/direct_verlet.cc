@@ -1,7 +1,6 @@
 #include <cstddef>
 #include <cmath>
-#include <iostream>
-#include "storage.hh"
+#include "../storage/storage.hh"
 
 int main()
 {
@@ -17,11 +16,11 @@ int main()
     // store data every how manieth step
     size_t n_s {1000};
 
-    // name of current dataset ()
-    size_t i_s {0};
+    // name of current dataset
+    size_t i_s {};
 
     // set up h5 storage
-    Storage storage;
+    Storage storage {"direct_verlet.h5"};
 
     // initial condition
     // storage format
@@ -58,7 +57,7 @@ int main()
     double *s = new double[4*n];
 
     // state pos 1 is initially ic
-    for (size_t i {0}; i < n; i++)
+    for (size_t i {}; i < n; i++)
     {   // particle i pos 1 x
         s[2*(i+n)] = ic[2*i];
         // particle i pos 1 y
@@ -67,18 +66,18 @@ int main()
 
     // state pos 2 calculated via 2nd order Taylor series
     // start by setting 0
-    for (size_t i {0}; i < n; i++)
+    for (size_t i {}; i < n; i++)
     {   // particle i pos 1 x
         s[2*i] = 0;
         // particle i pos 1 y
         s[2*i+1] = 0;
     }
-    // precalculate recurring number
     {
+    // precalculate recurring number
     double a {0.5 * dt};
     // iterate over pairs
-    for (size_t i {0}; i < n; i++)
-    {   for (size_t j {0}; j < n; j++)
+    for (size_t i {}; i < n; i++)
+    {   for (size_t j {}; j < n; j++)
         {   // 2nd term Taylor
             if (i != j)
             {   // pos 1 distance
@@ -110,24 +109,24 @@ int main()
     for (size_t t {1}; t < n_t; t++)
     {
         // iterate over pairs
-        for (size_t i {0}; i < n; i++)
+        for (size_t i {}; i < n; i++)
         {   // acceleration counters initially 0
-            double b {0};
-            double c {0};
-            for (size_t j {0}; j < n; j++)
+            double b {};
+            double c {};
+            for (size_t j {}; j < n; j++)
             {   if (i != j)
                 {   // pos 1 distance
                     double d {s[2*i]-s[2*j]};
                     double e {s[2*i+1]-s[2*j+1]};
                     // pos 1 common acceleration factor
-                    double f {1/sqrt(d*d+e*e+0.0001)};
+                    double f {1/sqrt(d*d+e*e)};
                     f = f*f*f;
                     // add to acceleration counters, fix factor later
                     b -= f*d;
                     c -= f*e;
                 }
             }
-            // set pos 1 to pos 2 but save old pos 1
+            // set pos 1 to pos 2, but save old pos 1
             double d {s[2*(i+n)]};
             double e {s[2*(i+n)+1]};
             s[2*(i+n)] = s[2*i];
