@@ -2,6 +2,8 @@
 #include <cmath>
 #include "../storage/storage.hh"
 
+#include <iostream>
+
 int main()
 {
     // number of particles
@@ -11,16 +13,13 @@ int main()
     double dt {0.00001};
 
     // time steps, including ic
-    size_t n_t {40000001};
+    size_t n_t {10001};
 
     // store data every how manieth step
     size_t n_s {1000};
 
-    // name of current dataset
-    size_t i_s {};
-
     // set up h5 storage
-    Storage storage {"direct_verlet.h5"};
+    Storage storage {{"direct_verlet.h5", H5F_ACC_TRUNC}};
 
     // initial condition
     // storage format
@@ -43,7 +42,7 @@ int main()
     };
 
     // store initial condition
-    storage.add(ic, n, i_s++);
+    storage.new_dataset(ic, n, 0);
 
     // state
     // storage format
@@ -138,7 +137,7 @@ int main()
 
         // store state
         if (t % n_s == 0)
-            storage.add(s, n, i_s++);
+            storage.new_dataset(s, n, t / n_s);
     }
     }
 }
