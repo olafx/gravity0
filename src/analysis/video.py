@@ -1,11 +1,19 @@
+import sys
 import numpy as np
 import h5py
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-n = 20000
+if len(sys.argv) != 3:
+    exit()
+
+data_name = sys.argv[1]
+video_name = sys.argv[2]
+
+matplotlib.use('Agg')
+
+n = 4000
 
 ffmpeg_writer = anim.writers['ffmpeg']
 writer = ffmpeg_writer(fps=60)
@@ -15,9 +23,9 @@ ax.set_aspect('equal')
 
 im, = ax.plot([], [], 'o')
 
-file = h5py.File('gravity0.h5', 'r')
+file = h5py.File(data_name, 'r')
 
-with writer.saving(fig, "gravity0.mp4", dpi=100):
+with writer.saving(fig, video_name, dpi=100):
     for i in range(n + 1):
         data = file[str(i)]
         im.set_data(data[:,0], data[:,1])
