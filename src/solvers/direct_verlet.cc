@@ -21,7 +21,7 @@ int main()
     double *state = new double[4*n];
     double *ic = new double[4*n];
 
-    // setting initial condition
+    // reading initial condition
     storage.read_dataset(ic, "ic");
     // storing initial condition pos as step 0
     storage.new_dataset(ic, n, "0");
