@@ -1,0 +1,235 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+King Cluster Sampling Method
+\end_layout
+
+\begin_layout Author
+Olaf Willocx
+\end_layout
+
+\begin_layout Abstract
+Sampling of King (1966) model of clusters bound by galactic tides.
+\end_layout
+
+\begin_layout Standard
+Choose constant 
+\begin_inset Formula $k$
+\end_inset
+
+, which determines number of objects in cluster, or can be seen as a normalizati
+on constant.
+\end_layout
+
+\begin_layout Standard
+Choose constant 
+\begin_inset Formula $j$
+\end_inset
+
+, which determines cluster spatial extension.
+\end_layout
+
+\begin_layout Standard
+Choose constant 
+\begin_inset Formula $V_{0}$
+\end_inset
+
+, the depth of the potential (
+\begin_inset Formula $V$
+\end_inset
+
+ at 
+\begin_inset Formula $\mathbf{r}=\mathbf{0}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Using 
+\begin_inset Formula $\int_{0}^{x}e^{-u^{2}}u^{4}du=\frac{3\sqrt{\pi}}{8}\text{erf}x-e^{-x^{2}}(\frac{x^{3}}{2}+\frac{3x}{4})$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\rho(V)=\frac{\pi^{3/2}k}{j^{3}}e^{2j^{2}(V_{0}-V)}\text{erf}(j\sqrt{-2V})-2\pi k\sqrt{-2V}e^{2j^{2}V_{0}}(\frac{1}{j^{2}}-\frac{4V}{3})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Solve 
+\begin_inset Formula $V(r)$
+\end_inset
+
+ from 
+\begin_inset Formula $\frac{d^{2}V}{dr^{2}}+\frac{2}{r}\frac{dV}{dr}=4\pi G\rho(V)$
+\end_inset
+
+ numerically (Laplace's equation), starting from 
+\begin_inset Formula $r=0$
+\end_inset
+
+, and using 
+\begin_inset Formula $\lim_{r\to0}\frac{1}{r}\frac{dV}{dr}=\frac{4\pi G\rho_{0}}{3}$
+\end_inset
+
+, which is really based on the empirical 
+\begin_inset Formula $\nabla^{2}W=-9$
+\end_inset
+
+.
+ This doesn't have to mean the solution is empirical since the solution
+ is rather independent of this initial condition anyway.
+\end_layout
+
+\begin_layout Standard
+Using 
+\begin_inset Formula $V(r)$
+\end_inset
+
+, sample 
+\begin_inset Formula $f(r,v)=ke^{-2j^{2}(V(r)-V_{0})}(e^{-j^{2}v^{2}}-e^{2j^{2}V(r)})$
+\end_inset
+
+, picking uniformally random 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+To sample the PDF 
+\begin_inset Formula $f(r,v)$
+\end_inset
+
+, need to calculate CDF 
+\begin_inset Formula $F(r',v')=\int_{0}^{r'}\int_{0}^{\sqrt{-2V(r')}}drdv16\pi^{2}r^{2}v^{2}f(r,v)$
+\end_inset
+
+.
+ Really 
+\begin_inset Formula $F^{-1}(p_{r'},p_{v'})$
+\end_inset
+
+ is needed.
+ This is so difficult that I doubt anyone actually does this.
+ The rejection sampling method is way easier and not necessarily slow, since
+ 
+\begin_inset Formula $F$
+\end_inset
+
+ must be numerically evaluated, and accurately at that.
+ Barnes (1988) says nothing about how he does the sampling unfortunately,
+ but McMillan, Dehnen 2007 does admit it!
+\end_layout
+
+\begin_layout Standard
+MATLAB program goes as far as to calculate 
+\begin_inset Formula $V(r)$
+\end_inset
+
+ numerically.
+ It just uses my analytically evaluated 
+\begin_inset Formula $\rho(V)$
+\end_inset
+
+ and solves Laplace's equation.
+ Still need to sampling and data writing.
+\end_layout
+
+\begin_layout Standard
+None of this is in the King (1966) paper; he evaluates 
+\begin_inset Formula $\int_{0}^{x}e^{-u^{2}}u^{4}du$
+\end_inset
+
+ numerically and solves Laplace's equation in a dimensionless form.
+ This is my adaptation, and although the result looks good, I don't know
+ if it's actually correct.
+\end_layout
+
+\end_body
+\end_document
