@@ -23,7 +23,7 @@ state storage format
 /*
 initialize state using ic of size n via 2nd order Taylor series with timestep dt
 */
-void ic_init(const double *const ic, double *const state, const size_t n, const double dt)
+void init(const double *const ic, double *const state, const size_t n, const double dt)
 {
     // state pos 2 prep for init
     for (size_t i {}; i < 2*n; i++)

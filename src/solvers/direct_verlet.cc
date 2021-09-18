@@ -14,8 +14,8 @@ int main()
     // open h5 file with initial condition
     Storage storage {{"0.h5", H5F_ACC_RDWR}};
 
-    // get number of objects in initial condition
-    size_t n {storage.read_dataset_size("ic") / 2};
+    // get number of objects from initial condition
+    size_t n {storage.read_dataset_size("ic")/2};
 
     // memory allocation
     double *state = new double[4*n];
@@ -27,14 +27,14 @@ int main()
     storage.new_dataset(ic, n, "0");
 
     // initializing state to be ready for Verlet integration
-    ic_init(ic, state, n, dt);
+    init(ic, state, n, dt);
     delete[] ic;
 
     // time loop
-    for (size_t t {1}; t < n_t; t++)
+    for (size_t s {1}; s < n_t; s++)
     {   // store state
-        if (t % n_s == 0)
-            storage.new_dataset(state, n, std::to_string(t/n_s));
+        if (s % n_s == 0)
+            storage.new_dataset(state, n, std::to_string(s/n_s));
         update(state, n, dt);
     }
 
