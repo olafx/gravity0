@@ -9,7 +9,7 @@ struct Storage
     H5File file;
 
     void new_dataset(void *buffer, hsize_t size, std::string name)
-    {   hsize_t shape[2] {size, 2};
+    {   hsize_t shape[2] {size, 3};
         DataSpace dataspace {2, shape};
         FloatType datatype {PredType::NATIVE_DOUBLE};
         DataSet dataset {file.createDataSet(name, datatype, dataspace)};

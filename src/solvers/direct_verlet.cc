@@ -18,8 +18,8 @@ int main()
     size_t n {storage.read_dataset_size("ic")/2};
 
     // memory allocation
-    double *state = new double[4*n];
-    double *ic = new double[4*n];
+    double *state = new double[6*n];
+    double *ic = new double[6*n];
 
     // reading initial condition
     storage.read_dataset(ic, "ic");
