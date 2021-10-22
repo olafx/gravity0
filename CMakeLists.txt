@@ -1,15 +1,7 @@
 cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
-
 project(gravity0)
-
 find_package(HDF5 REQUIRED COMPONENTS CXX HL)
-
 add_executable(direct_verlet src/solvers/direct_verlet.cc)
-add_executable(ic_gen src/ic_gen/ic_gen.cc)
-
-set_target_properties(direct_verlet ic_gen PROPERTIES CXX_STANDARD 17)
-
+set_target_properties(direct_verlet PROPERTIES CXX_STANDARD 17)
 include_directories(${HDF5_CXX_INCLUDE_DIRS})
-
 target_link_libraries(direct_verlet PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
-target_link_libraries(ic_gen PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
