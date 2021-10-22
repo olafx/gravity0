@@ -100,14 +100,14 @@ while sol.y[0, i] < 0:
 #   Since the interpolation is linear, the exact boundary of the cluster can easily be evaluated.
 r0 = sol.t[i - 1] - sol.y[0, i - 1] * r_max / N / (sol.y[0, i] - sol.y[0, i - 1])
 
-print(f'cluster boundary is at {r0:.4f}, which is {N * r0 / r_max:.2f} steps from the origin')
+print(f'cluster boundary is at {r0:.4f}, which is {int(N * r0 / r_max)} steps from the origin')
 
 
 
 #   Rejection sampling the main probability distribution function.
 #   The radial distance sampling is simple. The velocity sampling range depends on the radial distance that was just sampled
 #   (because e.g. stars far from the cluster center with high gravitational energy must have low kinetic energy).
-def p(r, v):
+def P(r, v):
     return r**2 * v**2 * np.exp(-2 * j**2 * (V_interp(r) - V0))\
            * (np.exp(-j**2 * v**2) - np.exp(j**2 * 2 * V_interp(r)))
 samples_r = np.empty(n)
@@ -118,7 +118,7 @@ while i < n:
     r = np.random.uniform(0, r0)
     v = np.random.uniform(0, np.sqrt(-2 * V_interp(r)))
     p = np.random.uniform(0, 1 / np.e**2)
-    if p < p(r, v):
+    if p < P(r, v):
         samples_r[i] = r
         samples_v[i] = v
         i += 1
@@ -155,7 +155,7 @@ print('spherical to Cartesian transformation complete')
 
 
 fp = h5py.File(filename, 'w')
-fp.create_dataset(dataset_path_and_name, data = data, dtype = np.float64, shape = (2 * n, 3))
+fp.create_dataset(dataset_name, data = data, dtype = np.float64, shape = (2 * n, 3))
 fp.close()
 
 print('data stored')
