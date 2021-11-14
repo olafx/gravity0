@@ -24,16 +24,18 @@ from scipy.interpolate import interp1d
 from scipy.special import erf
 import h5py
 
+np.random.seed(0)
+
 #   Same variable names as King (1966).
-k = 1
+k = .1
 j = 1
 V0 = -1
 G = 1
 
 #   The number of radii to be linearly interpolated between when sampling.
-N = 100
+N = 10000
 #   The number of stars to sample.
-n = 20
+n = 4
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be accidentally chosen
 #   too small in the numerical evaluation to reach that distance. The r_max variable is the maximum distance of said range.
@@ -41,7 +43,7 @@ n = 20
 #   Best not to make it too large since this will increase the distance between steps in the range. Make sure there are enough
 #   steps from the origin (which is printed during evaluation).
 #   Could in principle use estimates and/or trial and error to automate this and not need this variable.
-r_max = 1.5
+r_max = 10
 
 #   The name of the HDF5 file in which data will be stored.
 filename = '0.h5'

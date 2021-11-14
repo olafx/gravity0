@@ -1,7 +1,20 @@
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20)
 project(gravity0)
-find_package(HDF5 REQUIRED COMPONENTS CXX HL)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+find_package(Irulan)
+find_package(HDF5 COMPONENTS CXX HL)
+find_package(fmt)
 add_executable(direct_verlet src/solvers/direct_verlet.cc)
-set_target_properties(direct_verlet PROPERTIES CXX_STANDARD 17)
-include_directories(${HDF5_CXX_INCLUDE_DIRS})
-target_link_libraries(direct_verlet PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+include_directories(
+    ${HDF5_CXX_INCLUDE_DIRS}
+    ${fmt_INCLUDE_DIRS}
+)
+target_link_libraries(
+    direct_verlet
+    Irulan
+    ${HDF5_CXX_LIBRARIES}
+    ${HDF5_HL_LIBRARIES}
+    fmt::fmt    
+)
