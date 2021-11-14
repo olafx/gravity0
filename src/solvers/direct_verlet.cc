@@ -29,13 +29,13 @@ int main()
     storage.read_dataset(ic, "ic");
 
     //  storing initial condition pos as step 0
-    storage.new_dataset(ic, integrator.n, "0");
+    storage.new_dataset(ic, n, "0");
 
 
 
     //  things that happen when we care about state number s
     auto process = [&](std::size_t s)
-    {   storage.new_dataset(state, integrator.n, std::to_string(s / n_s));
+    {   storage.new_dataset(state, n, std::to_string(s / n_s));
         fmt::print("{}/{}\n", s, n_t);
     };
 
