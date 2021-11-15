@@ -19,7 +19,7 @@ void forward_init(const double *const ic, double *const state,
     #pragma omp parallel for
     for (std::size_t i = 0; i < n; i++)
     {   for (std::size_t j = 0; j < n; j++)
-        {   if (i != j)
+            if (i != j)
             {   const double b1 = state[3*(i+n)  ] - state[3*(j+n)  ];
                 const double b2 = state[3*(i+n)+1] - state[3*(j+n)+1];
                 const double b3 = state[3*(i+n)+2] - state[3*(j+n)+2];
@@ -31,7 +31,6 @@ void forward_init(const double *const ic, double *const state,
                 state[3*i+1] -= c * b2;
                 state[3*i+2] -= c * b3;
             }
-        }
         state[3*i  ] = state[3*(i+n)  ] + (state[3*i  ] * (0.5 * dt) + ic[3*(i+n)  ]) * dt;
         state[3*i+1] = state[3*(i+n)+1] + (state[3*i+1] * (0.5 * dt) + ic[3*(i+n)+1]) * dt;
         state[3*i+2] = state[3*(i+n)+2] + (state[3*i+2] * (0.5 * dt) + ic[3*(i+n)+2]) * dt;
@@ -49,7 +48,7 @@ void forward(double *const state,
         double a2 = 0;
         double a3 = 0;
         for (std::size_t j = 0; j < n; j++)
-        {   if (i != j)
+            if (i != j)
             {   const double b1 = state[3*i  ] - state[3*j  ];
                 const double b2 = state[3*i+1] - state[3*j+1];
                 const double b3 = state[3*i+2] - state[3*j+2];
@@ -61,7 +60,6 @@ void forward(double *const state,
                 a2 -= c * b2;
                 a3 -= c * b3;
             }
-        }
         const double d1 = state[3*(i+n)  ];
         const double d2 = state[3*(i+n)+1];
         const double d3 = state[3*(i+n)+2];
