@@ -1,58 +1,43 @@
 #include "direct_verlet.hh"
 #include "../storage/storage.hh"
-#include <fmt/core.h>
+#include <iostream>
 
 int main()
 {
-    //  number of time steps, excluding initial condition
-    std::size_t n_t = 10000000;
 
-    //  store data every so many steps
-    std::size_t n_s = 10000;
+    /* number of time steps  */ std::size_t n_t = 10000;
+    /* steps between process */ std::size_t n_s = 10;
+    /* time step             */ double dt   = 1e-6;
+    /* softening eps ^2      */ double eps2 = 3e-5;
+    /* h5 file with init con */ Storage storage {{"0.h5", H5F_ACC_RDWR}};
+    /* number of objs        */ std::size_t n = storage.read_dataset_size("ic");
+    /* integrator memory     */ double *ic    = new double[6*n];
+                                double *state = new double[6*n];
 
-    //  open h5 file containing initial condition
-    Storage storage {{"0.h5", H5F_ACC_RDWR}};
-
-    //  reading number of objects
-    std::size_t n = storage.read_dataset_size("ic");
-
-    //  memory
-    double *ic    = new double[3 * 2 * n],
-           *state = new double[3 * 2 * n];
-
-    //  setting up solver with time step, softening parameter, number of objects, and memory
-    Direct_Verlet integrator {1e-6, 3e-5, n, ic, state};
+    /* read and store ic     */ storage.read_dataset(ic, "ic");
+                                storage.new_dataset(ic, n, "0");
 
 
 
-    //  reading initial condition
-    storage.read_dataset(ic, "ic");
-
-    //  storing initial condition pos as step 0
-    storage.new_dataset(ic, n, "0");
-
-
-
-    //  things that happen when we care about state number s
+    //  process state # s
     auto process = [&](std::size_t s)
     {   storage.new_dataset(state, n, std::to_string(s / n_s));
-        fmt::print("{}/{}\n", s, n_t);
+        std::cout << s << '/' << n_t << '\n';
     };
 
 
 
-    //  initializing state to be ready for Verlet integration
-    //  this counts as the first integration step
-    integrator.forward_init();
+    //  initialization step
+    Direct_Verlet::forward_init(ic, state, n, dt, eps2);
     if (n_s == 1)
         process(1);
 
-    //  initial condition no longer needed
     delete[] ic;
 
-    //  time loop
+
+    //  main loop
     for (std::size_t s = 2; s <= n_t; s++)
-    {   integrator.forward();
+    {   Direct_Verlet::forward(state, n, dt, eps2);
         if (s % n_s == 0)
             process(s);
     }

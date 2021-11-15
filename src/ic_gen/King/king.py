@@ -35,7 +35,7 @@ G = 1
 #   The number of radii to be linearly interpolated between when sampling.
 N = 10000
 #   The number of stars to sample.
-n = 4
+n = 2048
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be accidentally chosen
 #   too small in the numerical evaluation to reach that distance. The r_max variable is the maximum distance of said range.
