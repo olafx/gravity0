@@ -24,13 +24,14 @@ from scipy.interpolate import interp1d
 from scipy.special import erf
 import h5py
 
-np.random.seed(0)
+#   Make RNG reproducible by creating a generator with seed 0.
+generator = np.random.default_rng(0)
 
 #   Same variable names as King (1966).
-k = .1
-j = 1
+k  = .1
+j  = 1
 V0 = -1
-G = 1
+G  = 1
 
 #   The number of radii to be linearly interpolated between when sampling.
 N = 10000
@@ -117,9 +118,9 @@ samples_v = np.empty(n)
 i = 0
 attempts = 0
 while i < n:
-    r = np.random.uniform(0, r0)
-    v = np.random.uniform(0, np.sqrt(-2 * V_interp(r)))
-    p = np.random.uniform(0, 1 / np.e**2)
+    r = generator.uniform(0, r0)
+    v = generator.uniform(0, np.sqrt(-2 * V_interp(r)))
+    p = generator.uniform(0, 1 / np.e**2)
     if p < P(r, v):
         samples_r[i] = r
         samples_v[i] = v
