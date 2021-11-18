@@ -5,6 +5,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 find_package(HDF5 COMPONENTS CXX HL)
 find_package(OpenMP)
+find_package(VTK COMPONENTS IOXdmf3)
 add_executable(direct_verlet src/solvers/direct_verlet.cc)
 add_executable(direct_leapfrog src/solvers/direct_leapfrog.cc)
 include_directories(
@@ -12,13 +13,15 @@ include_directories(
 )
 target_link_libraries(
     direct_verlet
+    OpenMP::OpenMP_CXX
     ${HDF5_CXX_LIBRARIES}
     ${HDF5_HL_LIBRARIES}
-    OpenMP::OpenMP_CXX
+    ${VTK_LIBRARIES}
 )
 target_link_libraries(
     direct_leapfrog
+    OpenMP::OpenMP_CXX
     ${HDF5_CXX_LIBRARIES}
     ${HDF5_HL_LIBRARIES}
-    OpenMP::OpenMP_CXX
+    ${VTK_LIBRARIES}
 )
