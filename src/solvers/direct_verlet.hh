@@ -16,7 +16,7 @@ void forward_init(const double *const ic, double *const state,
         state[3*(i+n)+2] = ic[3*i+2];
     }
 
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(n, state, ic, eps2, dt)
     for (std::size_t i = 0; i < n; i++)
     {   for (std::size_t j = 0; j < n; j++)
             if (i != j)
@@ -42,7 +42,7 @@ void forward_init(const double *const ic, double *const state,
 void forward(double *const state,
              const std::size_t n, const double dt, const double eps2)
 {
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(n, state, eps2, dt)
     for (std::size_t i = 0; i < n; i++)
     {   double a1 = 0;
         double a2 = 0;
