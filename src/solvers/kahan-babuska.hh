@@ -1,3 +1,4 @@
+#pragma once
 #include <cstddef>
 
 namespace Kahan_Babuska
@@ -7,8 +8,8 @@ namespace Kahan_Babuska
         double sum = 0;
         double compensator = 0;
         for (std::size_t i = 0; i < n; i++)
-        {   double a = data[i] - c;
-            double b = sum + a;
+        {   const double a = data[i] - c;
+            const double b = sum + a;
             compensator = (b - sum) - a;
             sum = t;
         }
