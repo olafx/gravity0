@@ -1,20 +1,31 @@
 #pragma once
 #include <cstddef>
 
-namespace Kahan_Babuska
+namespace accurate_sum
 {
-    double sum(const double *const data, const std::size_t n)
+    double Kahan_Babuska(const double *const data, const std::size_t n)
     {
-        double sum = 0;
-        double compensator = 0;
-        for (std::size_t i = 0; i < n; i++)
-        {   const double a = data[i] - c;
+        double sum = data[0] + data[1];
+        double compensator = (data[0] + data[1]) - data[1];
+        for (std::size_t i = 2; i < n; i++)
+        {   const double a = data[i] - compensator;
             const double b = sum + a;
             compensator = (b - sum) - a;
-            sum = t;
+            sum = b;
         }
         return sum;
     }
 
-    
+    template <std::size_t n_direct = 128>
+    double pairwise(const double *const data, const std::size_t n)
+    {
+        if (n <= n_direct)
+        {   double sum = data[0];
+            for (std::size_t i = 1; i < n; i++)
+                sum += data[i];
+            return sum;
+        }
+        else
+            return sum<n_direct>(data, n / 2) + sum<n_direct>(data + n / 2, n / 2);
+    }
 }
