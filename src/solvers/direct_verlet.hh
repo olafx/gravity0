@@ -19,7 +19,7 @@ namespace Direct_Verlet
 */
 
 void forward_init(const double *const ic, double *const state,
-                  const std::size_t n, const double dt, const double eps2)
+                  const std::size_t n, const double dt, const double eps2) noexcept
 {
     for (std::size_t i = 0; i < 3 *n; i++)
         state[i] = 0;
@@ -54,7 +54,7 @@ void forward_init(const double *const ic, double *const state,
 
 
 void forward(double *const state,
-             const std::size_t n, const double dt, const double eps2)
+             const std::size_t n, const double dt, const double eps2) noexcept
 {
     #pragma omp parallel for default(none) shared(n, state, eps2, dt)
     for (std::size_t i = 0; i < n; i++)

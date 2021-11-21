@@ -12,7 +12,7 @@ namespace Field_Periodic
     TODO initialization
     */
 
-    void forward()
+    void forward() noexcept
     {
     }
 }

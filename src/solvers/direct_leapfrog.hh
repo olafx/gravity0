@@ -19,7 +19,7 @@ namespace Direct_Leapfrog
 {
 
 void forward(double *const state, const std::size_t n,
-             const double dt, const double eps2)
+             const double dt, const double eps2) noexcept
 {
     #pragma omp parallel for default(none) shared(n, state, eps2, dt)
     for (std::size_t i = 0; i < n; i++)

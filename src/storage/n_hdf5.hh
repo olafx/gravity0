@@ -17,6 +17,11 @@ struct n_hdf5
 {
     H5File file;
 
+    n_hdf5(const std::string& name)
+        : file {name, H5F_ACC_RDWR}
+    {
+    }
+
     void new_dataset(const double *const buffer, const hsize_t size, const std::string& name) const
     {   hsize_t shape[2] {size, 3};
         DataSpace dataspace {2, shape};
