@@ -4,6 +4,20 @@
 namespace Direct_Verlet
 {
 
+/*  Direct Verlet
+
+    direct n-body solver
+    constant time step
+    3D
+    2 positions
+    0 velocities
+    symplectic
+    softening
+    2nd order in space
+    1st order in time
+    Taylor series initialization from 1 position 1 velocity data
+*/
+
 void forward_init(const double *const ic, double *const state,
                   const std::size_t n, const double dt, const double eps2)
 {

@@ -16,12 +16,10 @@ target_link_libraries(
     OpenMP::OpenMP_CXX
     ${HDF5_CXX_LIBRARIES}
     ${HDF5_HL_LIBRARIES}
-    ${VTK_LIBRARIES}
 )
 target_link_libraries(
     direct_leapfrog
     OpenMP::OpenMP_CXX
     ${HDF5_CXX_LIBRARIES}
     ${HDF5_HL_LIBRARIES}
-    ${VTK_LIBRARIES}
 )

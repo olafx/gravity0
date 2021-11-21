@@ -1,5 +1,5 @@
 #include "direct_verlet.hh"
-#include "../storage/storage.hh"
+#include "../storage/n_hdf5.hh"
 #include <iostream>
 
 int main()
@@ -8,7 +8,7 @@ int main()
     /* steps between process */ std::size_t n_s = 1000;
     /* time step             */ double dt   = 1e-5;
     /* softening eps ^2      */ double eps2 = 3e-5;
-    /* h5 file with init con */ Storage storage {{"0.h5", H5F_ACC_RDWR}};
+    /* h5 file with init con */ Storage::n_hdf5 storage {{"0.h5", H5F_ACC_RDWR}};
     /* number of objs        */ std::size_t n = storage.read_dataset_size("ic");
     /* integrator memory     */ auto *ic    = new double[6*n];
                                 auto *state = new double[6*n];
@@ -26,10 +26,8 @@ int main()
 
 
 
-    using namespace Direct_Verlet;
-
     //  initialization step
-    forward_init(ic, state, n, dt, eps2);
+    Direct_Verlet::forward_init(ic, state, n, dt, eps2);
     if (n_s == 1)
         process(1);
 
@@ -38,7 +36,7 @@ int main()
 
     //  main loop
     for (std::size_t s = 2; s <= n_t; s++)
-    {   forward(state, n, dt, eps2);
+    {   Direct_Verlet::forward(state, n, dt, eps2);
         if (s % n_s == 0)
             process(s);
     }

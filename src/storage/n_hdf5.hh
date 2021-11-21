@@ -2,15 +2,22 @@
 #include <string>
 #include <H5Cpp.h>
 
-//  This homebrew HDF5 usage is temporary, will update to using Xdmf3 standard through VTK with SZip time compression.
+namespace Storage
+{
 
 using namespace H5;
 
-struct Storage
+//  time dependent n-body storage directly via HDF5
+//  TODO
+//    - store a few large 3D arrays rather than tons of 2D arrays
+//    - store times
+//    - format attributes in root
+
+struct n_hdf5
 {
     H5File file;
 
-    void new_dataset(const void *buffer, hsize_t size, const std::string& name) const
+    void new_dataset(const double *const buffer, const hsize_t size, const std::string& name) const
     {   hsize_t shape[2] {size, 3};
         DataSpace dataspace {2, shape};
         FloatType datatype {PredType::NATIVE_DOUBLE};
@@ -18,7 +25,7 @@ struct Storage
         dataset.write(buffer, PredType::NATIVE_DOUBLE);
     }
 
-    void read_dataset(void *buffer, const std::string& name) const
+    void read_dataset(double *const buffer, const std::string& name) const
     {   DataSet dataset {file.openDataSet(name)};
         dataset.read(buffer, PredType::NATIVE_DOUBLE);
     }
@@ -36,3 +43,5 @@ struct Storage
         return root.getNumObjs();
     }
 };
+
+}

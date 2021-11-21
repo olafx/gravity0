@@ -1,6 +1,20 @@
 #pragma once
 #include <cmath>
 
+/*  Direct Leapfrog
+
+    direct n-body solver
+    constant time step
+    3D
+    1 position
+    1 velocity
+    symplectic
+    softening
+    2nd order in space
+    1st order in time
+    no initializaion
+*/
+
 namespace Direct_Leapfrog
 {
 

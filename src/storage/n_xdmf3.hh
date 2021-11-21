@@ -1,18 +1,25 @@
 #pragma once
-#include <vtkSmartPointer.h>
+#include <vtkNew.h>
+#include <vtkDoubleArray.h>
 #include <vtkPointData.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXdmf3Writer.h>
-#include <vtkDoubleArray.h>
 
-struct Storage2
+namespace Storage
 {
-    vtkSmartPointer<vtkDoubleArray>      points_data = decltype(points_data)::New();
-    vtkSmartPointer<vtkPoints>           points      = decltype(points)     ::New();
-    vtkSmartPointer<vtkUnstructuredGrid> grid        = decltype(grid)       ::New();
-    vtkSmartPointer<vtkXdmf3Writer>      writer      = decltype(writer)     ::New();
 
-    Storage2(const std::string& name)
+//  time dependent n-body storage via VTK unstructured grid format
+//  TODO
+//    - time dependence
+
+struct n_xdmf3
+{
+    vtkNew<vtkDoubleArray>      points_data;
+    vtkNew<vtkPoints>           points;
+    vtkNew<vtkUnstructuredGrid> grid;
+    vtkNew<vtkXdmf3Writer>      writer;
+
+    n_xdmf3(const std::string& name)
     {
         points_data->SetNumberOfComponents(3);
 
@@ -36,3 +43,5 @@ struct Storage2
         writer->Write();
     }
 };
+
+}
