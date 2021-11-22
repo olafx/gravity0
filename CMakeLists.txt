@@ -2,24 +2,15 @@ cmake_minimum_required(VERSION 3.20)
 project(gravity0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fno-math-errno -ffinite-math-only")
-find_package(HDF5 COMPONENTS CXX HL)
-find_package(OpenMP)
-find_package(VTK COMPONENTS IOXdmf3)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fno-math-errno -ffinite-math-only") # clang
+find_package(HDF5 REQUIRED COMPONENTS CXX HL)
+find_package(OpenMP REQUIRED)
+find_package(VTK REQUIRED COMPONENTS IOXdmf3 IOXML IOImage)
+include_directories(${HDF5_CXX_INCLUDE_DIRS})
 add_executable(direct_verlet src/solvers/direct_verlet.cc)
 add_executable(direct_leapfrog src/solvers/direct_leapfrog.cc)
-include_directories(
-    ${HDF5_CXX_INCLUDE_DIRS}
-)
-target_link_libraries(
-    direct_verlet
-    OpenMP::OpenMP_CXX
-    ${HDF5_CXX_LIBRARIES}
-    ${HDF5_HL_LIBRARIES}
-)
-target_link_libraries(
-    direct_leapfrog
-    OpenMP::OpenMP_CXX
-    ${HDF5_CXX_LIBRARIES}
-    ${HDF5_HL_LIBRARIES}
-)
+add_executable(field_periodic src/solvers/field_periodic.cc)
+target_link_libraries(direct_verlet PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+target_link_libraries(direct_leapfrog PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+target_link_libraries(field_periodic PRIVATE ${VTK_LIBRARIES})
+vtk_module_autoinit(TARGETS field_periodic MODULES ${VTK_LIBRARIES})
