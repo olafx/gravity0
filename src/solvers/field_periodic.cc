@@ -1,6 +1,6 @@
 #include "field_periodic.hh"
-#include "../storage/f_vti.hh"
-#include "../storage/n_vtu.hh"
+#include "../storage/field_vti.hh"
+#include "../storage/n_body_vtu.hh"
 
 int main()
 {

@@ -1,5 +1,5 @@
 #include "direct_leapfrog.hh"
-#include "../storage/n_hdf5.hh"
+#include "../storage/n_body_h5.hh"
 #include <fmt/core.h>
 
 int main()

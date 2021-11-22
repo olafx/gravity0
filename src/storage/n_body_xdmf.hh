@@ -11,15 +11,16 @@ namespace Storage
 //  time dependent n-body storage via VTK unstructured grid format
 //  TODO
 //    - time dependence
+//    - constructor needs to be more like the others; no set function
 
-struct n_xdmf3
+struct N_Body_xdmf
 {
     vtkNew<vtkDoubleArray>      points_data;
     vtkNew<vtkPoints>           points;
     vtkNew<vtkUnstructuredGrid> grid;
     vtkNew<vtkXdmf3Writer>      writer;
 
-    n_xdmf3(const std::string& name)
+    N_Body_xdmf(const std::string& name)
     {
         points_data->SetNumberOfComponents(3);
 
