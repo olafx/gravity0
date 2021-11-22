@@ -3,7 +3,6 @@
 #include <vtkImageData.h>
 #include <vtkImageImport.h>
 #include <vtkXMLImageDataWriter.h>
-#include <vtkDoubleArray.h>
 #include <string>
 #include <array>
 #include <type_traits>
@@ -14,7 +13,8 @@ namespace Storage
 
 //  time dependent uniform grid storage via VTK image format (multiple files, time not stored)
 
-template <std::size_t order = 2, typename = std::enable_if_t<order == 2 || order == 3>>
+template <std::size_t time_steps_per_file = 16384, std::size_t order = 2,
+          typename = std::enable_if_t<order == 2 || order == 3>>
 struct f_vti
 {
     vtkNew<vtkXMLImageDataWriter> writer;
@@ -23,7 +23,7 @@ struct f_vti
     std::string name_no_suffix;
 
     //  VTK uses integers for counts and doesn't mark data pointer for writing const
-    f_vti(const std::string& name, const std::array<int, order>& dims, double *const data)
+    f_vti(const std::string& name, double *const data, const std::array<int, order>& dims)
         : time_count {0}, name_no_suffix {name}
     {
         image_import->SetDataSpacing(1, 1, 1);
@@ -37,12 +37,24 @@ struct f_vti
         image_import->SetImportVoidPointer(data);
 
         writer->SetInputConnection(image_import->GetOutputPort());
+        writer->SetNumberOfTimeSteps(time_steps_per_file);
     }
 
-    void write()
+    void write(const double time)
     {
-        writer->SetFileName(fmt::format("{}_{:08d}.vti", name_no_suffix, time_count++).c_str());
-        writer->Write();
+        if (time_count % time_steps_per_file == 0)
+        {   if (time_count != 0)
+                writer->Stop();
+            writer->SetFileName(fmt::format("{}_{:04d}.vti", name_no_suffix, time_count / time_steps_per_file).c_str());
+            writer->Start();
+        }
+        time_count++;
+        image_import->Modified();
+        writer->WriteNextTime(time);
+    }
+
+    ~f_vti()
+    {   writer->Stop();
     }
 };
 

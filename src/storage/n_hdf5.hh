@@ -22,7 +22,7 @@ struct n_hdf5
     {
     }
 
-    void new_dataset(const double *const buffer, const hsize_t size, const std::string& name) const
+    void write(const double *const buffer, const hsize_t size, const std::string& name) const
     {   hsize_t shape[2] {size, 3};
         DataSpace dataspace {2, shape};
         FloatType datatype {PredType::NATIVE_DOUBLE};
@@ -30,12 +30,12 @@ struct n_hdf5
         dataset.write(buffer, PredType::NATIVE_DOUBLE);
     }
 
-    void read_dataset(double *const buffer, const std::string& name) const
+    void read(double *const buffer, const std::string& name) const
     {   DataSet dataset {file.openDataSet(name)};
         dataset.read(buffer, PredType::NATIVE_DOUBLE);
     }
 
-    hsize_t read_dataset_size(const std::string& name) const
+    hsize_t read_size(const std::string& name) const
     {   DataSet dataset {file.openDataSet(name)};
         DataSpace dataspace {dataset.getSpace()};
         hsize_t shape[2];

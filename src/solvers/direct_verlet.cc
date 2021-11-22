@@ -1,6 +1,6 @@
 #include "direct_verlet.hh"
 #include "../storage/n_hdf5.hh"
-#include <iostream>
+#include <fmt/core.h>
 
 int main()
 {
@@ -9,19 +9,19 @@ int main()
     /* time step             */ double dt   = 1e-5;
     /* softening eps ^2      */ double eps2 = 3e-5;
     /* h5 file with init con */ Storage::n_hdf5 storage {"0.h5"};
-    /* number of objs        */ std::size_t n = storage.read_dataset_size("ic");
+    /* number of objs        */ std::size_t n = storage.read_size("ic");
     /* integrator memory     */ auto *ic    = new double[6 * n];
                                 auto *state = new double[6 * n];
 
-    /* read and store ic     */ storage.read_dataset(ic, "ic");
-                                storage.new_dataset(ic, n, "0");
+    /* read and store ic     */ storage.read(ic, "ic");
+                                storage.write(ic, n, "0");
 
 
 
     //  process state # s
     auto process = [&](std::size_t s)
-    {   storage.new_dataset(state, n, std::to_string(s / n_s));
-        std::cout << s << '/' << n_t << '\n';
+    {   storage.write(state, n, std::to_string(s / n_s));
+        fmt::print("{}/{}\n", s, n_t);
     };
 
 
