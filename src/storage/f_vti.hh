@@ -15,7 +15,7 @@ namespace Storage
 
 template <std::size_t time_steps_per_file = 16384, std::size_t order = 2,
           typename = std::enable_if_t<order == 2 || order == 3>>
-struct f_vti
+struct Field_vti
 {
     vtkNew<vtkXMLImageDataWriter> writer;
     vtkNew<vtkImageImport> image_import;
@@ -23,7 +23,7 @@ struct f_vti
     std::string name_no_suffix;
 
     //  VTK uses integers for counts and doesn't mark data pointer for writing const
-    f_vti(const std::string& name, double *const data, const std::array<int, order>& dims)
+    Field_vti(const std::string& name, double *const data, const std::array<int, order>& dims)
         : time_count {0}, name_no_suffix {name}
     {
         image_import->SetDataSpacing(1, 1, 1);
@@ -53,7 +53,7 @@ struct f_vti
         writer->WriteNextTime(time);
     }
 
-    ~f_vti()
+    ~Field_vti()
     {   writer->Stop();
     }
 };

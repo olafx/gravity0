@@ -17,7 +17,7 @@ namespace Storage
 //    - points needs to use data; need to find how to set void ptr
 
 template <std::size_t time_steps_per_file = 16384>
-struct n_vtu
+struct N_Body_vtu
 {
     vtkNew<vtkXMLUnstructuredGridWriter> writer;
     vtkNew<vtkUnstructuredGrid> grid;
@@ -26,7 +26,7 @@ struct n_vtu
     std::string name_no_suffix;
 
     //  VTK uses integers for counts and doesn't mark data pointer for writing const
-    n_vtu(const std::string& name, double *const data, const int n)
+    N_Body_vtu(const std::string& name, double *const data, const int n)
         : time_count {0}, name_no_suffix {name}
     {
         points->SetDataType(VTK_DOUBLE);
@@ -54,7 +54,7 @@ struct n_vtu
         writer->WriteNextTime(time);
     }
 
-    ~n_vtu()
+    ~N_Body_vtu()
     {   writer->Stop();
     }
 };

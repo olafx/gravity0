@@ -13,11 +13,11 @@ using namespace H5;
 //    - store times
 //    - format attributes in root
 
-struct n_hdf5
+struct N_Body_h5
 {
     H5File file;
 
-    n_hdf5(const std::string& name)
+    N_Body_h5(const std::string& name)
         : file {name, H5F_ACC_RDWR}
     {
     }

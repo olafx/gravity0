@@ -6,7 +6,7 @@ namespace Field_Periodic
 
     uniform grid based solver
     constant time step
-    2D
+    2D or 3D
     TODO data
     TODO order
     TODO initialization

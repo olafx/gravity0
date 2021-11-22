@@ -8,7 +8,7 @@ int main()
     /* steps between process */ std::size_t n_s = 1000;
     /* time step             */ double dt   = 1e-5;
     /* softening eps^2       */ double eps2 = 3e-5;
-    /* h5 file with init con */ Storage::n_hdf5 storage {"0.h5"};
+    /* h5 file with init con */ Storage::N_Body_h5 storage {"0.h5"};
     /* number of objs        */ std::size_t n = storage.read_size("ic");
     /* integrator memory     */ auto *state = new double[6 * n];
 

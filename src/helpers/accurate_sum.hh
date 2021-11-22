@@ -1,9 +1,9 @@
 #pragma once
 #include <cstddef>
 
-namespace accurate_sum
+namespace Accurate_Sum
 {
-    double Kahan_Babuska(const double *const data, const std::size_t n)
+    double kahan_babuska(const double *const data, const std::size_t n)
     {
         double sum = data[0] + data[1];
         double compensator = (data[0] + data[1]) - data[1];
