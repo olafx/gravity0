@@ -1,8 +1,6 @@
 '''
 King model cluster sampling following King (1966).
 
-Some effort is made to explain how King sampling works and how I get certain results where I deviate from King's path.
-
 The calculations don't follow the paper exactly, but the results (should be/are) identical.
 -   King evaluates the differential equation describing density as a function of potential numerically.
     The differential equation indeed has no analytic solution, but the solution can be expressed using the error function, which
@@ -58,6 +56,10 @@ filename = '0.h5'
 #       particle n vel x, particle n vel y, particle n vel z
 dataset_name = 'ic'
 
+#   If the potential reaches 0 too fast, interpolation is inaccurate.
+#   This is the minimum number of steps to reach the boundary that is acceptable, otherwise program gives a warning.
+THRESHOLD_STEPS_TO_BOUNDARY = 16
+
 #   The density as a function of potential is the result of a non analytic differential equation.
 #   King solves it numerically. I solve it using the error function, which can be approximated analytically.
 def rho(V):
@@ -82,8 +84,6 @@ def rhs(r, q):
 #   believe) in his undimensionalized version of the partial differential equation instead.
 sol = solve_ivp(rhs, [0, r_max], [V0, 0], t_eval=np.linspace(0, r_max, N))
 
-print('integration complete')
-
 
 
 #   Plain linear interpolation. Anything else might make the boundary smooth, which is unphysical.
@@ -94,12 +94,13 @@ i = 0
 while sol.y[0, i] < 0:
     i += 1
     if i == N:
-        exit('could not continue since r0 > r_max')
+        raise RuntimeError("can't continue since r0 > r_max")
 
 #   Since the interpolation is linear, the exact boundary of the cluster can easily be evaluated.
 r0 = sol.t[i-1] - sol.y[0, i-1] * r_max / N / (sol.y[0, i] - sol.y[0, i-1])
 
-print(f'cluster boundary is at {r0:.4f}, which is {int(N * r0 / r_max)} steps from the origin')
+if i < THRESHOLD_STEPS_TO_BOUNDARY:
+    raise RuntimeWarning('steps to boundary too small; reduce r_max and/or increase N')
 
 
 
@@ -120,7 +121,7 @@ while i < n:
         i += 1
     attempts += 1
 
-print(f'r and v sampling completed with efficiency {i / attempts * 100:.2f}%')
+print(f'sampling efficiency {i / attempts * 100:.2f}%')
 
 
 
@@ -129,8 +130,6 @@ samples_r_polar = np.arccos(np.random.uniform(-1, 1, n))
 samples_v_polar = np.arccos(np.random.uniform(-1, 1, n))
 samples_r_azimuthal = np.random.uniform(0, 2 * np.pi, n)
 samples_v_azimuthal = np.random.uniform(0, 2 * np.pi, n)
-
-print('angular sampling complete')
 
 
 
@@ -145,11 +144,7 @@ for i in range(n):
     data[3*(i+n)+1] = samples_v[i] * np.sin(samples_v_polar[i]) * np.sin(samples_v_azimuthal[i])
     data[3*(i+n)+2] = samples_v[i] * np.cos(samples_v_polar[i])
 
-print('spherical to Cartesian transformation complete')
 
 
-
-with h5py.File(filename, 'w') as fp:
-    fp.create_dataset(dataset_name, data=data, dtype=np.float64, shape=(2 * n, 3), libver='latest')
-
-print('data stored')
+with h5py.File(filename, 'w', libver='latest') as fp:
+    fp.create_dataset(dataset_name, data=data, dtype=np.float64, shape=(2 * n, 3))

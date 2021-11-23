@@ -30,8 +30,6 @@ struct N_Body_vtu
     {
         points_data->SetVoidArray(data, 3 * n, 1);
         points_data->SetNumberOfComponents(3);
-        // points_data->SetNumberOfTuples(0);
-        // points_data->SetNumberOfValues(1);
 
         points->SetDataType(VTK_DOUBLE);
         points->SetNumberOfPoints(n);
