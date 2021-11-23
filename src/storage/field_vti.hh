@@ -11,7 +11,7 @@
 namespace Storage
 {
 
-//  time dependent uniform grid storage via VTK image format (multiple files, time not stored)
+//  time dependent 2D or 3D uniform grid storage via VTK image format (multiple files, time not stored)
 
 template <std::size_t time_steps_per_file = 16384, std::size_t order = 2,
           typename = std::enable_if_t<order == 2 || order == 3>>

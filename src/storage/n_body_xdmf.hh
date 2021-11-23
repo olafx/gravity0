@@ -8,7 +8,7 @@
 namespace Storage
 {
 
-//  time dependent n-body storage via VTK unstructured grid format
+//  time dependent 3D n-body storage via VTK unstructured grid format
 //  TODO
 //    - time dependence
 //    - constructor needs to be more like the others; no set function

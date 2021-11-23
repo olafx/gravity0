@@ -7,7 +7,7 @@ namespace Storage
 
 using namespace H5;
 
-//  time dependent n-body storage directly via HDF5
+//  time dependent 3D n-body storage directly via HDF5
 //  TODO
 //    - store a few large 3D arrays rather than tons of 2D arrays
 //    - store times

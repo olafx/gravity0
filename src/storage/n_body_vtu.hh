@@ -12,9 +12,7 @@
 namespace Storage
 {
 
-//  time dependent n-body storage via VTK unstructured grid format (multiple files, time not stored)
-//  TODO
-//    - points needs to use data; need to find how to set void ptr
+//  time dependent 3D n-body storage via VTK unstructured grid format (multiple files, time not stored)
 
 template <std::size_t time_steps_per_file = 16384>
 struct N_Body_vtu
@@ -22,6 +20,7 @@ struct N_Body_vtu
     vtkNew<vtkXMLUnstructuredGridWriter> writer;
     vtkNew<vtkUnstructuredGrid> grid;
     vtkNew<vtkPoints> points;
+    vtkNew<vtkDoubleArray> points_data;
     std::size_t time_count;
     std::string name_no_suffix;
 
@@ -29,11 +28,14 @@ struct N_Body_vtu
     N_Body_vtu(const std::string& name, double *const data, const int n)
         : time_count {0}, name_no_suffix {name}
     {
+        points_data->SetVoidArray(data, 3 * n, 1);
+        points_data->SetNumberOfComponents(3);
+        // points_data->SetNumberOfTuples(0);
+        // points_data->SetNumberOfValues(1);
+
         points->SetDataType(VTK_DOUBLE);
         points->SetNumberOfPoints(n);
-        //  TODO temp nonsense
-        for (std::size_t i = 0; i < n; i++)
-            points->SetPoint(i, data[3*i], data[3*i+1], data[3*i+2]);
+        points->SetData(points_data);
 
         grid->SetPoints(points);
 
