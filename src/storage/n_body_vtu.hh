@@ -12,7 +12,7 @@
 namespace Storage
 {
 
-//  time dependent 3D n-body storage via VTK unstructured grid format (multiple files, time not stored)
+//  time dependent 3D n-body storage via VTK unstructured grid format (multiple files, time stored)
 
 template <std::size_t time_steps_per_file = 16384>
 struct N_Body_vtu
