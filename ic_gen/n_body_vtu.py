@@ -1,8 +1,6 @@
 '''
 Create a vtk XML unstructured grid file (.vtu) from an initial condition.
 An initial condition can optionally contain velocities and describe multiple times.
-
-Position and velocity data are stored in separate 
 '''
 
 from vtk import *
@@ -28,7 +26,7 @@ class N_Body_vtu:
         self.writer.SetInputData(self.grid)
         self.writer.SetNumberOfTimeSteps(n_times)
 
-    def write(self, positions: numpy.ndarray, velocities: numpy.ndarray = None, time: float = 0):
+    def write(self, positions: np.ndarray, velocities: np.ndarray = None, time: float = 0):
         if velocities is not None:
             if positions.size != velocities.size:
                 raise BufferError('positions and velocities should have equal size')
@@ -59,10 +57,6 @@ class N_Body_vtu:
 if __name__ == '__main__':
     generator = np.random.default_rng(0)
     n         = 16
-    #   Test without velocities and one time.
-    writer    = N_Body_vtu('0')
-    positions = generator.normal(0, 1, (n, 3))
-    writer.write(positions)
     #   Test with velocities over multiple times.
     n_times   = 4
     times     = np.linspace(0, 1, n_times)
@@ -71,3 +65,7 @@ if __name__ == '__main__':
         positions  = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
         writer.write(positions, velocities, time)
+    #   Test without velocities and one time.
+    writer    = N_Body_vtu('0')
+    positions = generator.normal(0, 1, (n, 3))
+    writer.write(positions)

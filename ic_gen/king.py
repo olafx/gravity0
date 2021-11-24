@@ -17,13 +17,14 @@ rejection sampling is likely the most accurate and fastest sampling method for t
 '''
 
 import numpy as np
-from numpy import pi, sqrt, exp, sin, cos, arccos, linspace, random, array, where
+from numpy import pi, sqrt, exp, sin, cos, arccos, linspace, random, array, transpose
 from scipy.special import erf
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import h5py
 
 from n_body_vtu import N_Body_vtu
+from n_body_h5 import N_Body_h5
 
 
 
@@ -42,7 +43,7 @@ G  = 1
 N = 10000
 
 #   The number of stars to sample.
-n = 2**13
+n = 8
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be accidentally chosen
 #   too small in the numerical evaluation to reach that distance. The r_max variable is the maximum distance of said range.
@@ -53,7 +54,7 @@ n = 2**13
 r_max = 10
 
 #   File name.
-filename = '0.vtu'
+filename = '0.h5'
 
 #   The name of the dataset in which the data will be stored in the following format as a row major 2 * n by 3 doubles matrix:
 #       particle 1 pos x, particle 1 pos y, particle 1 pos z,
@@ -71,7 +72,7 @@ THRESHOLD_STEPS_TO_BOUNDARY = 16
 
 
 file_format = filename.rsplit('.')[-1]
-if file_format not in ['vtu']:
+if file_format not in ['h5', 'vtu']:
     raise Exception('file format not supported')
 
 #   The density as a function of potential is the result of a non analytic differential equation.
@@ -79,15 +80,19 @@ if file_format not in ['vtu']:
 def rho(V):
     #   The piecewise nature of this function is not for numerical reasons, the density really is discontinuous due to galactic
     #   tidal forces carrying away stars that wonder out beyond the cluster radius, which is the key idea behind the King model.
-    return where(V > 0, 0, sqrt(pi**3) * k / j**3 * exp(2 * j**2 * (V0 - V)) * erf(j * sqrt(-2 * V))\
-                              -2 * pi * k * sqrt(-2 * V) * exp(2 * j**2 * V0) * (1 / j**2 - 4 / 3 * V))
+    return 0 if V > 0 else sqrt(pi**3) * k / j**3 * exp(2 * j**2 * (V0 - V)) * erf(j * sqrt(-2 * V))\
+                           -2 * pi * k * sqrt(-2 * V) * exp(2 * j**2 * V0) * (1 / j**2 - 4 / 3 * V)
 
 #   This is the right hand side of the partial differential equation describing density as a function of radial distance.
 #   This differential equation is the differential version of Gauss's law for gravity in radial coordinates, under spherical
 #   symmetry.
 def rhs(r, q):
+    a = 4 * pi * G * rho(q[0])
     #   An inverse square field has a potential equal to zero at distance 0.
-    return [q[1], where(r == 0, 4 * pi * G * rho(q[0]), 4 * pi * G * rho(q[0]) - 2 * q[1] / r)]
+    if r != 0:
+        a -= 2 * q[1] / r
+    return [q[1], a]
+
 
 
 #   Notice the 0 initial condition mentioned earlier. King here would use some undimensionalized experimental value (8 I
@@ -152,11 +157,14 @@ def spherical_to_Cartesian(r, polar, azimuthal):
 positions  = spherical_to_Cartesian(samples_r, samples_r_polar, samples_r_azimuthal)
 velocities = spherical_to_Cartesian(samples_v, samples_v_polar, samples_v_azimuthal)
 
-#   TODO More proper HDF5 initial condition writer.
-#   with h5py.File(filename, 'w', libver='latest') as fp:
-#       fp.create_dataset(dataset_name, data=data, dtype=np.float64, shape=(2 * n, 3))
 
+
+#   A struct of array was calculated for sampling, but an array of structs is needed for simulation (x, y, z together).
+positions  = transpose(positions)
+velocities = transpose(velocities)
 
 
 if file_format == 'vtu':
     N_Body_vtu('king').write(positions, velocities)
+elif file_format == 'h5':
+    N_Body_h5('king').write(positions, velocities)
