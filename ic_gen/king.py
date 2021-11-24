@@ -17,13 +17,20 @@ rejection sampling is likely the most accurate and fastest sampling method for t
 '''
 
 import numpy as np
+from numpy import pi, sqrt, exp, sin, cos, arccos, linspace, random, array, where
+from scipy.special import erf
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
-from scipy.special import erf
 import h5py
 
+from n_body_vtu import N_Body_vtu
+
+
+
 #   Make RNG reproducible by creating a generator with seed 0.
-generator = np.random.default_rng(0)
+generator = random.default_rng(0)
+
+
 
 #   Same variable names as King (1966).
 k  = .1
@@ -33,8 +40,9 @@ G  = 1
 
 #   The number of radii to be linearly interpolated between when sampling.
 N = 10000
+
 #   The number of stars to sample.
-n = 4
+n = 2**13
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be accidentally chosen
 #   too small in the numerical evaluation to reach that distance. The r_max variable is the maximum distance of said range.
@@ -44,8 +52,8 @@ n = 4
 #   Could in principle use estimates and/or trial and error to automate this and not need this variable.
 r_max = 10
 
-#   The name of the HDF5 file in which data will be stored.
-filename = '0.h5'
+#   File name.
+filename = '0.vtu'
 
 #   The name of the dataset in which the data will be stored in the following format as a row major 2 * n by 3 doubles matrix:
 #       particle 1 pos x, particle 1 pos y, particle 1 pos z,
@@ -60,29 +68,31 @@ dataset_name = 'ic'
 #   This is the minimum number of steps to reach the boundary that is acceptable, otherwise program gives a warning.
 THRESHOLD_STEPS_TO_BOUNDARY = 16
 
+
+
+file_format = filename.rsplit('.')[-1]
+if file_format not in ['vtu']:
+    raise Exception('file format not supported')
+
 #   The density as a function of potential is the result of a non analytic differential equation.
 #   King solves it numerically. I solve it using the error function, which can be approximated analytically.
 def rho(V):
     #   The piecewise nature of this function is not for numerical reasons, the density really is discontinuous due to galactic
     #   tidal forces carrying away stars that wonder out beyond the cluster radius, which is the key idea behind the King model.
-    return 0 if V > 0 else np.sqrt(np.pi**3) * k / j**3 * np.exp(2 * j**2 * (V0 - V)) * erf(j * np.sqrt(-2 * V))\
-                           -2 * np.pi * k * np.sqrt(-2 * V) * np.exp(2 * j**2 * V0) * (1 / j**2 - 4 / 3 * V)
+    return where(V > 0, 0, sqrt(pi**3) * k / j**3 * exp(2 * j**2 * (V0 - V)) * erf(j * sqrt(-2 * V))\
+                              -2 * pi * k * sqrt(-2 * V) * exp(2 * j**2 * V0) * (1 / j**2 - 4 / 3 * V))
 
 #   This is the right hand side of the partial differential equation describing density as a function of radial distance.
 #   This differential equation is the differential version of Gauss's law for gravity in radial coordinates, under spherical
 #   symmetry.
 def rhs(r, q):
-    a = 4 * np.pi * G * rho(q[0])
     #   An inverse square field has a potential equal to zero at distance 0.
-    if r != 0:
-        a -= 2 * q[1] / r
-    return [q[1], a]
-
+    return [q[1], where(r == 0, 4 * pi * G * rho(q[0]), 4 * pi * G * rho(q[0]) - 2 * q[1] / r)]
 
 
 #   Notice the 0 initial condition mentioned earlier. King here would use some undimensionalized experimental value (8 I
 #   believe) in his undimensionalized version of the partial differential equation instead.
-sol = solve_ivp(rhs, [0, r_max], [V0, 0], t_eval=np.linspace(0, r_max, N))
+sol = solve_ivp(rhs, [0, r_max], [V0, 0], t_eval=linspace(0, r_max, N))
 
 
 
@@ -113,9 +123,9 @@ i = 0
 attempts = 0
 while i < n:
     r = generator.uniform(0, r0)
-    v = generator.uniform(0, np.sqrt(-2 * V_interp(r)))
+    v = generator.uniform(0, sqrt(-2 * V_interp(r)))
     p = generator.uniform(0, 1 / np.e**2)
-    if p < r**2 * v**2 * np.exp(-2 * j**2 * (V_interp(r) - V0)) * (np.exp(-j**2 * v**2) - np.exp(j**2 * 2 * V_interp(r))):
+    if p < r**2 * v**2 * exp(-2 * j**2 * (V_interp(r) - V0)) * (exp(-j**2 * v**2) - exp(j**2 * 2 * V_interp(r))):
         samples_r[i] = r
         samples_v[i] = v
         i += 1
@@ -126,25 +136,27 @@ print(f'sampling efficiency {i / attempts * 100:.2f}%')
 
 
 #   The sampling above did not include directional data. Position and velocity are isotropically distributed.
-samples_r_polar = np.arccos(np.random.uniform(-1, 1, n))
-samples_v_polar = np.arccos(np.random.uniform(-1, 1, n))
-samples_r_azimuthal = np.random.uniform(0, 2 * np.pi, n)
-samples_v_azimuthal = np.random.uniform(0, 2 * np.pi, n)
+samples_r_polar = arccos(generator.uniform(-1, 1, n))
+samples_v_polar = arccos(generator.uniform(-1, 1, n))
+samples_r_azimuthal = generator.uniform(0, 2 * pi, n)
+samples_v_azimuthal = generator.uniform(0, 2 * pi, n)
 
 
 
 #   The samples are complete now, but should be transformed from spherical to Cartesian coordinates for storage and direct use
 #   by the solvers.
-data = np.empty(6 * n)
-for i in range(n):
-    data[3*i]   = samples_r[i] * np.sin(samples_r_polar[i]) * np.cos(samples_r_azimuthal[i])
-    data[3*i+1] = samples_r[i] * np.sin(samples_r_polar[i]) * np.sin(samples_r_azimuthal[i])
-    data[3*i+2] = samples_r[i] * np.cos(samples_r_polar[i])
-    data[3*(i+n)]   = samples_v[i] * np.sin(samples_v_polar[i]) * np.cos(samples_v_azimuthal[i])
-    data[3*(i+n)+1] = samples_v[i] * np.sin(samples_v_polar[i]) * np.sin(samples_v_azimuthal[i])
-    data[3*(i+n)+2] = samples_v[i] * np.cos(samples_v_polar[i])
+def spherical_to_Cartesian(r, polar, azimuthal):
+    return array([r * sin(polar) * cos(azimuthal),
+                  r * sin(polar) * sin(azimuthal),
+                  r * cos(polar)])
+positions  = spherical_to_Cartesian(samples_r, samples_r_polar, samples_r_azimuthal)
+velocities = spherical_to_Cartesian(samples_v, samples_v_polar, samples_v_azimuthal)
+
+#   TODO More proper HDF5 initial condition writer.
+#   with h5py.File(filename, 'w', libver='latest') as fp:
+#       fp.create_dataset(dataset_name, data=data, dtype=np.float64, shape=(2 * n, 3))
 
 
 
-with h5py.File(filename, 'w', libver='latest') as fp:
-    fp.create_dataset(dataset_name, data=data, dtype=np.float64, shape=(2 * n, 3))
+if file_format == 'vtu':
+    N_Body_vtu('king').write(positions, velocities)

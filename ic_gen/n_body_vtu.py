@@ -1,28 +1,73 @@
 '''
-Create a vtk XML unstructured grid file (.vtu) from an initial condition constituting positions and velocities.
-'''
+Create a vtk XML unstructured grid file (.vtu) from an initial condition.
+An initial condition can optionally contain velocities and describe multiple times.
 
-#   TODO multiple times
+Position and velocity data are stored in separate 
+'''
 
 from vtk import *
 from vtk.util.numpy_support import *
 import numpy as np
 
-class N_Body_vtu():
-    def __init__(self, name):
-        self.writer = vtkXMLUnstructuredGridWriter()
-        self.grid = vtkUnstructuredGrid()
-        self.points = vtkPoints()
-        self.writer.SetInputData(self.grid)
-        self.writer.SetFileName(name + '.vtu')
-    def write(self, positions, velocities):
-        self.points.SetData(numpy_to_vtk(positions, deep=True))
+class N_Body_vtu:
+
+    def __init__(self, name: str, n_times: float = 1):
+        self.writer     = vtkXMLUnstructuredGridWriter()
+        self.grid       = vtkUnstructuredGrid()
+        self.points     = vtkPoints()
+        #   Points are represented by positions.
+        self.positions  = vtkDoubleArray()
+        self.time_count = 0
+        self.n_times    = n_times
+        self.positions.SetNumberOfComponents(3)
+        #   Grid contains points (which themselves contain positions).
+        self.points.SetData(self.positions)
         self.grid.SetPoints(self.points)
-        self.writer.Write()
+        # self.grid.GetPointData().AddArray(self.velocities)
+        self.writer.SetFileName(name + '.vtu')
+        self.writer.SetInputData(self.grid)
+        self.writer.SetNumberOfTimeSteps(n_times)
 
-def main():
-    writer = N_Body_vtu('n_body_vtu')
-    positions, velocities = np.random.rand(10, 3), np.random.rand(10, 3)
-    writer.write(positions, velocities)
+    def write(self, positions: numpy.ndarray, velocities: numpy.ndarray = None, time: float = 0):
+        if velocities is not None:
+            if positions.size != velocities.size:
+                raise BufferError('positions and velocities should have equal size')
+        if self.time_count == 0:
+            if velocities is not None:
+                #   Can only know now the user wants velocities.
+                #   Velocities are represented by point data.
+                self.velocities = vtkDoubleArray()
+                self.velocities.SetName('Velocity')
+                self.velocities.SetNumberOfComponents(3)
+                #   Grid stores velocities as point data. Need to add an array, can
+                #   in general have multiple point data arrays, or 'attributes' as in Xdmf3.
+                self.grid.GetPointData().AddArray(self.velocities)
+            self.writer.Start()
+        #   Update data. The 1 signifies not to deallocate. (Makes more sense in C++.)
+        self.positions.SetArray(numpy_to_vtk(positions), positions.size, 1)
+        #   Signal that data has been modified so that new time gets its own data
+        #   rather than referencing the data from the previous time.
+        self.positions.Modified()
+        if velocities is not None:
+            self.velocities.SetArray(numpy_to_vtk(velocities), velocities.size, 1)
+            self.velocities.Modified()
+        self.writer.WriteNextTime(time)
+        self.time_count += 1
+        if self.time_count == self.n_times:
+            self.writer.Stop()
 
-main()
+if __name__ == '__main__':
+    generator = np.random.default_rng(0)
+    n         = 16
+    #   Test without velocities and one time.
+    writer    = N_Body_vtu('0')
+    positions = generator.normal(0, 1, (n, 3))
+    writer.write(positions)
+    #   Test with velocities over multiple times.
+    n_times   = 4
+    times     = np.linspace(0, 1, n_times)
+    writer    = N_Body_vtu('1', n_times)
+    for time in times:
+        positions  = generator.normal(0, 1, (n, 3))
+        velocities = generator.normal(0, 1, (n, 3))
+        writer.write(positions, velocities, time)
