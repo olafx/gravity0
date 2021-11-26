@@ -69,9 +69,9 @@ void forward_init(const double *const ic, double *const state,
                 state[3*i+1] -= c * b2;
                 state[3*i+2] -= c * b3;
             }
-        state[3*i  ] = state[3*(i+n)  ] + (state[3*i  ] * (0.5 * dt) + ic[3*(i+n)  ]) * dt;
-        state[3*i+1] = state[3*(i+n)+1] + (state[3*i+1] * (0.5 * dt) + ic[3*(i+n)+1]) * dt;
-        state[3*i+2] = state[3*(i+n)+2] + (state[3*i+2] * (0.5 * dt) + ic[3*(i+n)+2]) * dt;
+        state[3*i  ] = state[3*(i+n)  ] + (.5 * dt * state[3*i  ] + ic[3*(i+n)  ]) * dt;
+        state[3*i+1] = state[3*(i+n)+1] + (.5 * dt * state[3*i+1] + ic[3*(i+n)+1]) * dt;
+        state[3*i+2] = state[3*(i+n)+2] + (.5 * dt * state[3*i+2] + ic[3*(i+n)+2]) * dt;
     }
 }
 

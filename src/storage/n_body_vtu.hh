@@ -31,6 +31,7 @@
 #include <vtkCompositeDataPipeline.h>
 #include <vtkDoubleArray.h>
 #include <string>
+#include <utility>
 #include <fmt/format.h>
 
 namespace Storage
@@ -49,8 +50,8 @@ struct N_Body_vtu
     std::string name_no_suffix;
 
     //  VTK uses integers for counts and doesn't mark data pointer for writing const
-    N_Body_vtu(const std::string& name, double *const data, const int n)
-        : time_count {0}, name_no_suffix {name}
+    N_Body_vtu(std::string name, double *const data, const int n)
+        : time_count {0}, name_no_suffix {std::move(name)}
     {
         points_data->SetVoidArray(data, 3 * n, 1);
         points_data->SetNumberOfComponents(3);
@@ -73,9 +74,9 @@ struct N_Body_vtu
             writer->SetFileName(fmt::format("{}_{:04d}.vtu", name_no_suffix, time_count / time_steps_per_file).c_str());
             writer->Start();
         }
-        time_count++;
         points->Modified();
         writer->WriteNextTime(time);
+        time_count++;
     }
 
     ~N_Body_vtu()

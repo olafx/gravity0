@@ -1,4 +1,4 @@
-'''
+"""
 MIT License
 
 Copyright (c) 2021 Olaf Willocx
@@ -20,27 +20,28 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
+
+from vtk import *
+from vtk.util.numpy_support import *
+import numpy as np
 
 '''
 Create a vtk XML unstructured grid file (.vtu) from an initial condition.
 An initial condition can optionally contain velocities and describe multiple times.
 '''
 
-from vtk import *
-from vtk.util.numpy_support import *
-import numpy as np
 
 class N_Body_vtu:
 
     def __init__(self, name: str, n_times: float = 1):
-        self.writer     = vtkXMLUnstructuredGridWriter()
-        self.grid       = vtkUnstructuredGrid()
-        self.points     = vtkPoints()
+        self.writer = vtkXMLUnstructuredGridWriter()
+        self.grid = vtkUnstructuredGrid()
+        self.points = vtkPoints()
         #   Points are represented by positions.
-        self.positions  = vtkDoubleArray()
+        self.positions = vtkDoubleArray()
         self.time_count = 0
-        self.n_times    = n_times
+        self.n_times = n_times
         self.positions.SetNumberOfComponents(3)
         #   Grid contains points (which themselves contain positions).
         self.points.SetData(self.positions)
@@ -78,18 +79,19 @@ class N_Body_vtu:
         if self.time_count == self.n_times:
             self.writer.Stop()
 
+
 if __name__ == '__main__':
     generator = np.random.default_rng(0)
-    n         = 16
+    n = 16
     #   Test with velocities over multiple times.
-    n_times   = 4
-    times     = np.linspace(0, 1, n_times)
-    writer    = N_Body_vtu('1', n_times)
+    n_times = 4
+    times = np.linspace(0, 1, n_times)
+    writer = N_Body_vtu('1', n_times)
     for time in times:
-        positions  = generator.normal(0, 1, (n, 3))
+        positions = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
         writer.write(positions, velocities, time)
     #   Test without velocities and one time.
-    writer    = N_Body_vtu('0')
+    writer = N_Body_vtu('0')
     positions = generator.normal(0, 1, (n, 3))
     writer.write(positions)

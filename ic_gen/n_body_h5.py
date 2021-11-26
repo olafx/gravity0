@@ -1,4 +1,4 @@
-'''
+"""
 MIT License
 
 Copyright (c) 2021 Olaf Willocx
@@ -20,7 +20,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
+
+import h5py
+import numpy as np
 
 '''
 Create an HDF5 file (.h5) from an initial condition.
@@ -39,25 +42,27 @@ A 'time' dataset is also stored in each group, containing the times.
 Access speed from fast to slow: spatial dimensions, objects, times.
 
 Root gets a string attribute describing much of what is described here.
+
+A 'time ranges' dataset is stored in root containing the last time in each dataset.
 '''
 
-import h5py
-import numpy as np
 
 class N_Body_h5:
-    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 2**14, time_chunk_size: int = 2**8):
-        self.fp              = h5py.File(name + '.h5', 'w', libver='latest')
-        self.time_count      = 0
+
+    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 2 ** 14, time_chunk_size: int = 2 ** 8):
+        self.fp = h5py.File(name + '.h5', 'w', libver='latest')
+        self.time_count = 0
         #   The only reason # of times is used is because N_Body_h5's dtor can't be relied on to write
         #   the final lingering time data, since Python starts shutting down before HDF5 is done writing.
         #   Knowing # of times in advance, the write function can add the linger times.
-        self.n_times         = n_times
-        self.times           = np.empty([min(n_times, time_group_size)], dtype=np.float64)
+        self.n_times = n_times
+        self.times = np.empty([min(n_times, time_group_size)], dtype=np.float64)
         self.time_group_size = time_group_size
         self.time_chunk_size = time_chunk_size
         #   Number of objects in the previous time step, to check for consistency.
-        self.n_prev          = None
-        self.had_vel_prev    = None
+        self.n_prev = None
+        self.time_prev = None
+        self.had_vel_prev = None
         #   Writing info attributes.
         self.fp.attrs.create('time chunk size', time_group_size, dtype=np.uint32)
         self.fp.attrs['info'] = \
@@ -66,6 +71,8 @@ class N_Body_h5:
             The number of time steps per chunk is given by the 'time chunk size' attribute.
             Groups contain a position 'pos' dataset, the 'times' dataset, and optionally a 'vel' velocity dataset.
             '''
+        self.fp['/'].create_dataset('time ranges', shape=-(n_times // -time_group_size), dtype=np.float64)
+
     def write(self, positions: np.ndarray, velocities: np.ndarray = None, time: float = 0):
         if velocities is not None:
             if positions.shape != velocities.shape:
@@ -73,12 +80,17 @@ class N_Body_h5:
         n = positions.shape[0]
         if self.n_prev is not None and self.n_prev != n:
             raise BufferError("number of objects can't be changing throughout the initial condition")
+        if self.time_prev is not None and time <= self.time_prev:
+            raise BufferError('new time must be larger than the last')
         if self.had_vel_prev and velocities is None:
             raise BufferError('either all or none of the times must have velocities')
+        if (self.time_count + 1) % self.time_group_size == 0:
+            #   Save time range.
+            self.fp['/time ranges'][self.time_count // self.time_group_size] = time
         if self.time_count % self.time_group_size == 0:
             #   Save times.
             if self.time_count != 0:
-                self.fp['/' + str(self.time_count // self.time_group_size - 1)].create_dataset('times', data=self.times)
+                self.fp['/' + str(self.time_count // self.time_group_size - 1)].create_dataset('time', data=self.times)
             #   Time for a new group.
             group = self.fp.create_group(str(self.time_count // self.time_group_size))
             group.create_dataset('pos', shape=(0, n, 3), maxshape=(None, n, 3),
@@ -97,26 +109,29 @@ class N_Body_h5:
             group['vel'][self.time_count % self.time_group_size] = velocities
         if self.time_count + 1 == self.n_times:
             #   Save lingering time steps.
-            group.create_dataset('times', data=self.times[:(self.time_count % self.time_group_size + 1)])
+            group.create_dataset('time', data=self.times[:(self.time_count % self.time_group_size + 1)])
+            self.fp['/time ranges'][self.time_count // self.time_group_size] = time
         self.n_prev = n
+        self.time_prev = time
         self.had_vel_prev = velocities is not None
         self.time_count += 1
 
     def __del__(self):
         self.fp.close()
 
+
 if __name__ == '__main__':
     generator = np.random.default_rng(0)
-    n         = 16
+    n = 16
     #   Test without velocities and one time.
-    writer    = N_Body_h5('0')
+    writer = N_Body_h5('0')
     positions = generator.normal(0, 1, (n, 3))
     writer.write(positions)
     #   Test with velocities over multiple times.
-    n_times   = 7
-    times     = np.linspace(0, 1, n_times)
-    writer    = N_Body_h5('1', n_times, 5)
+    n_times = 7
+    times = np.linspace(0, 1, n_times)
+    writer = N_Body_h5('1', n_times, 5)
     for time in times:
-        positions  = generator.normal(0, 1, (n, 3))
+        positions = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
         writer.write(positions, velocities, time)

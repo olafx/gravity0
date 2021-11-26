@@ -58,7 +58,7 @@ struct N_Body_xdmf
         writer->SetInputData(grid);
     }
 
-    void set(double *const data, const std::size_t n)
+    void set(double *const data, const std::size_t n) const
     {
         points_data->SetVoidArray(data, 3 * n, 1);
     }

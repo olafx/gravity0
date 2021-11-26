@@ -30,6 +30,7 @@
 #include <string>
 #include <array>
 #include <type_traits>
+#include <utility>
 #include <fmt/format.h>
 
 namespace Storage
@@ -42,25 +43,25 @@ template <std::size_t time_steps_per_file = 16384, std::size_t order = 2,
 struct Field_vti
 {
     vtkNew<vtkXMLImageDataWriter> writer;
-    vtkNew<vtkImageImport> image_import;
-    std::size_t time_count;
+    vtkNew<vtkImageImport> importer;
+    std::size_t time_count = 0;
     std::string name_no_suffix;
 
     //  VTK uses integers for counts and doesn't mark data pointer for writing const
-    Field_vti(const std::string& name, double *const data, const std::array<int, order>& dims)
-        : time_count {0}, name_no_suffix {name}
+    Field_vti(std::string name, double *const data, const std::array<int, order>& dims)
+        : name_no_suffix {std::move(name)}
     {
-        image_import->SetDataSpacing(1, 1, 1);
-        image_import->SetDataOrigin(0, 0, 0);
-        image_import->SetWholeExtent(0, dims[0] - 1,
+        importer->SetDataSpacing(1, 1, 1);
+        importer->SetDataOrigin(0, 0, 0);
+        importer->SetWholeExtent(0, dims[0] - 1,
                                      0, dims[1] - 1,
                                      0, order == 2 ? 0 : dims[2] - 1);
-        image_import->SetDataExtentToWholeExtent();
-        image_import->SetDataScalarType(VTK_DOUBLE);
-        image_import->SetNumberOfScalarComponents(1);
-        image_import->SetImportVoidPointer(data);
+        importer->SetDataExtentToWholeExtent();
+        importer->SetDataScalarType(VTK_DOUBLE);
+        importer->SetNumberOfScalarComponents(1);
+        importer->SetImportVoidPointer(data);
 
-        writer->SetInputConnection(image_import->GetOutputPort());
+        writer->SetInputConnection(importer->GetOutputPort());
         writer->SetNumberOfTimeSteps(time_steps_per_file);
     }
 
@@ -72,13 +73,14 @@ struct Field_vti
             writer->SetFileName(fmt::format("{}_{:04d}.vti", name_no_suffix, time_count / time_steps_per_file).c_str());
             writer->Start();
         }
-        time_count++;
-        image_import->Modified();
+        importer->Modified();
         writer->WriteNextTime(time);
+        time_count++;
     }
 
     ~Field_vti()
-    {   writer->Stop();
+    {
+        writer->Stop();
     }
 };
 
