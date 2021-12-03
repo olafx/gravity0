@@ -22,14 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import sys
 from numpy import pi, sqrt, e, exp, sin, cos, arccos, linspace, random, array, empty, transpose, ascontiguousarray
 from scipy.special import erf
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-import sys
 
-#   Writers.
+#   These are the writers.
 from n_body_vtu import N_Body_vtu
 from n_body_h5 import N_Body_h5
 
@@ -70,7 +70,7 @@ n = 32768
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be
 #   accidentally chosen too small in the numerical evaluation to reach that distance. The r_max variable is the maximum
-#   distance of said range. If the program exits with error 'could not continue since r0 > r_max', increase r_max here.
+#   distance of said range. If the program exits with error "can't continue since r_max < r0", increase r_max here.
 #   Best not to make it too large since this will increase the distance between steps in the range. Make sure there are
 #   enough steps from the origin (which is printed during evaluation). Could in principle use estimates and/or trial
 #   and error to automate this and not need this variable.
@@ -123,17 +123,17 @@ i = 0
 while sol.y[0, i] < 0:
     i += 1
     if i == N:
-        raise RuntimeError("can't continue since r0 > r_max")
-
+        raise RuntimeError(f"can't continue since r_max < r0")
 if 'info' in sys.argv:
-    print(f'{i} steps to boundary')
-
+    print(f'{i} of {N} steps to boundary')
 if i < threshold_steps_to_boundary:
     raise RuntimeWarning('steps to boundary too small; reduce r_max and/or increase N')
 
 
 #   Since the interpolation is linear, the exact boundary of the cluster can easily be evaluated.
 r0 = sol.t[i-1] - sol.y[0, i-1] * r_max / N / (sol.y[0, i] - sol.y[0, i-1])
+if 'info' in sys.argv:
+    print(f'boundary at {r0:.2f} of {r_max:.2f}')
 
 
 #   Rejection sampling the main probability distribution function. The radial distance sampling is simple. The velocity
@@ -181,6 +181,7 @@ velocities = spherical_to_Cartesian(samples_v, samples_v_polar, samples_v_azimut
 positions = ascontiguousarray(transpose(positions))
 velocities = ascontiguousarray(transpose(velocities))
 
+#   Finished, can store data.
 if file_format == 'vtu':
     N_Body_vtu(name).write(positions, velocities)
 elif file_format == 'h5':
@@ -189,9 +190,8 @@ elif file_format == 'h5':
 
 #   Histogram showing correlation between distance and velocity magnitude.
 if 'histogram' in sys.argv:
-    import matplotlib.pyplot as plt
     plt.hexbin(samples_r, samples_v, gridsize=24)
     plt.xlabel('distance')
     plt.ylabel('velocity magnitude')
     plt.colorbar()
-    plt.savefig(name + '.pdf')
+    plt.savefig(name + '.png', dpi=400)
