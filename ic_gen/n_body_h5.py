@@ -49,12 +49,10 @@ A 'time ranges' dataset is stored in root containing the last time in each datas
 
 class N_Body_h5:
 
-    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 2 ** 14, time_chunk_size: int = 2 ** 8):
+    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 2**14, time_chunk_size: int = 2**8):
         self.fp = h5py.File(name + '.h5', 'w', libver='latest')
         self.time_count = 0
-        #   The only reason # of times is used is because N_Body_h5's dtor can't be relied on to write
-        #   the final lingering time data, since Python starts shutting down before HDF5 is done writing.
-        #   Knowing # of times in advance, the write function can add the linger times.
+        #   The only reason # of times is used is https://github.com/h5py/h5py/issues/2007.
         self.n_times = n_times
         self.times = np.empty([min(n_times, time_group_size)], dtype=np.float64)
         self.time_group_size = time_group_size
@@ -71,7 +69,8 @@ class N_Body_h5:
             The number of time steps per chunk is given by the 'time chunk size' attribute.
             Groups contain a position 'pos' dataset, the 'times' dataset, and optionally a 'vel' velocity dataset.
             '''
-        self.fp['/'].create_dataset('time ranges', shape=-(n_times // -time_group_size), dtype=np.float64)
+        #   'time ranges' is extendible.
+        self.fp['/'].create_dataset('time ranges', shape=-(n_times // -time_group_size), maxshape=(None,), dtype=np.float64)
 
     def write(self, positions: np.ndarray, velocities: np.ndarray = None, time: float = 0):
         if velocities is not None:
@@ -90,9 +89,10 @@ class N_Body_h5:
         if self.time_count % self.time_group_size == 0:
             #   Save times.
             if self.time_count != 0:
-                self.fp['/' + str(self.time_count // self.time_group_size - 1)].create_dataset('time', data=self.times)
+                self.fp['/' + str(self.time_count // self.time_group_size - 1)].create_dataset('time', data=self.times, maxshape=(None,), chunks=self.time_chunk_size)
             #   Time for a new group.
             group = self.fp.create_group(str(self.time_count // self.time_group_size))
+            #   'pos' and 'vel' are extendible too.
             group.create_dataset('pos', shape=(0, n, 3), maxshape=(None, n, 3),
                                  chunks=(self.time_chunk_size, n, 3), dtype=np.float64, compression='szip')
             if velocities is not None:
@@ -109,7 +109,7 @@ class N_Body_h5:
             group['vel'][self.time_count % self.time_group_size] = velocities
         if self.time_count + 1 == self.n_times:
             #   Save lingering time steps.
-            group.create_dataset('time', data=self.times[:(self.time_count % self.time_group_size + 1)])
+            group.create_dataset('time', data=self.times[:(self.time_count % self.time_group_size + 1)], maxshape=(None,), chunks=self.time_chunk_size)
             self.fp['/time ranges'][self.time_count // self.time_group_size] = time
         self.n_prev = n
         self.time_prev = time
