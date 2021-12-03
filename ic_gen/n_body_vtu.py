@@ -46,7 +46,6 @@ class N_Body_vtu:
         #   Grid contains points (which themselves contain positions).
         self.points.SetData(self.positions)
         self.grid.SetPoints(self.points)
-        # self.grid.GetPointData().AddArray(self.velocities)
         self.writer.SetFileName(name + '.vtu')
         self.writer.SetInputData(self.grid)
         self.writer.SetNumberOfTimeSteps(n_times)
@@ -81,8 +80,10 @@ class N_Body_vtu:
 
 
 if __name__ == '__main__':
+
     generator = np.random.default_rng(0)
     n = 16
+
     #   Test with velocities over multiple times.
     n_times = 4
     times = np.linspace(0, 1, n_times)
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         positions = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
         writer.write(positions, velocities, time)
+
     #   Test without velocities and one time.
-    writer = N_Body_vtu('0')
-    positions = generator.normal(0, 1, (n, 3))
-    writer.write(positions)
+    positions = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    N_Body_vtu('0').write(positions)
