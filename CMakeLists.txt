@@ -1,16 +1,24 @@
 cmake_minimum_required(VERSION 3.20)
+
 project(gravity0)
+
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fno-math-errno -ffinite-math-only") # clang
+set(CMAKE_BUILD_TYPE Release)
+
 find_package(HDF5   REQUIRED COMPONENTS CXX HL)
 find_package(OpenMP REQUIRED)
-find_package(VTK    REQUIRED COMPONENTS IOXdmf3 IOXML IOImage)
+find_package(VTK    REQUIRED COMPONENTS IOXML IOImage)
 find_package(fmt    REQUIRED)
-include_directories(${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
+
 add_executable(direct_verlet   src/solvers/direct_verlet.cc)
 add_executable(direct_leapfrog src/solvers/direct_leapfrog.cc)
 add_executable(field_periodic  src/solvers/field_periodic.cc)
-target_link_libraries(direct_verlet   PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
-target_link_libraries(direct_leapfrog PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
-target_link_libraries(field_periodic  PRIVATE ${VTK_LIBRARIES} fmt::fmt)
+
+target_include_directories(direct_verlet   PRIVATE src/solvers src/storage ${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
+target_include_directories(direct_leapfrog PRIVATE src/solvers src/storage ${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
+target_include_directories(field_periodic  PRIVATE src/solvers src/storage ${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
+
+target_link_libraries(direct_verlet   PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES}                  fmt::fmt)
+target_link_libraries(direct_leapfrog PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES}                  fmt::fmt)
+target_link_libraries(field_periodic  PRIVATE                    ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
