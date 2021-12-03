@@ -23,7 +23,7 @@
 */
 
 #include "direct_verlet.hh"
-#include "../storage/n_body_h5.hh"
+#include "n_body_h5.hh"
 #include <fmt/core.h>
 
 int main()
