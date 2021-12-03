@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import numpy as np
-from numpy import pi, sqrt, exp, sin, cos, arccos, linspace, random, array, transpose
+from numpy import pi, sqrt, e, exp, sin, cos, arccos, linspace, random, array, empty, transpose, ascontiguousarray
 from scipy.special import erf
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
@@ -63,10 +62,10 @@ V0 = -1
 G = 1
 
 #   The number of radii to be linearly interpolated between when sampling.
-N = 10000
+N = 512
 
 #   The number of stars to sample.
-n = 8
+n = 8192
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be
 #   accidentally chosen too small in the numerical evaluation to reach that distance. The r_max variable is the maximum
@@ -77,14 +76,14 @@ n = 8
 r_max = 10
 
 #   File name.
-filename = '0.h5'
+filename = '0.vtu'
 
 #   The name of the dataset.
 dataset_name = 'ic'
 
 #   If the potential reaches 0 too fast, interpolation is inaccurate. This is the minimum number of steps to reach the
 #   boundary that is acceptable, otherwise program gives a warning.
-THRESHOLD_STEPS_TO_BOUNDARY = 16
+threshold_steps_to_boundary = 128
 
 
 file_format = filename.rsplit('.')[-1]
@@ -117,7 +116,6 @@ def rhs(r, q):
 #   I believe) in his undimensionalized version of the partial differential equation instead.
 sol = solve_ivp(rhs, [0, r_max], [V0, 0], t_eval=linspace(0, r_max, N))
 
-
 #   Plain linear interpolation. Anything else might make the boundary smooth, which is unphysical.
 V_interp = interp1d(sol.t, sol.y[0], assume_sorted=True)
 
@@ -128,7 +126,10 @@ while sol.y[0, i] < 0:
     i += 1
     if i == N:
         raise RuntimeError("can't continue since r0 > r_max")
-if i < THRESHOLD_STEPS_TO_BOUNDARY:
+
+print(f'{i} steps to boundary')
+
+if i < threshold_steps_to_boundary:
     raise RuntimeWarning('steps to boundary too small; reduce r_max and/or increase N')
 
 
@@ -139,21 +140,21 @@ r0 = sol.t[i-1] - sol.y[0, i-1] * r_max / N / (sol.y[0, i] - sol.y[0, i-1])
 #   Rejection sampling the main probability distribution function. The radial distance sampling is simple. The velocity
 #   sampling range depends on the radial distance that was just sampled (because e.g. stars far from the cluster center
 #   with high gravitational energy must have low kinetic energy).
-samples_r = np.empty(n)
-samples_v = np.empty(n)
+samples_r = empty(n)
+samples_v = empty(n)
 i = 0
 attempts = 0
 while i < n:
     r = generator.uniform(0, r0)
     v = generator.uniform(0, sqrt(-2 * V_interp(r)))
-    p = generator.uniform(0, 1 / np.e**2)
+    p = generator.uniform(0, 1 / e**2)
     if p < r**2 * v**2 * exp(-2 * j**2 * (V_interp(r) - V0)) * (exp(-j**2 * v**2) - exp(j**2 * 2 * V_interp(r))):
         samples_r[i] = r
         samples_v[i] = v
         i += 1
     attempts += 1
 
-print(f'sampling efficiency {i / attempts * 100:.2f}%')
+print(f'{n / attempts * 100:.2f}% sampling efficiency')
 
 
 #   The sampling above did not include directional data. Position and velocity are isotropically distributed.
@@ -174,10 +175,11 @@ positions = spherical_to_Cartesian(samples_r, samples_r_polar, samples_r_azimuth
 velocities = spherical_to_Cartesian(samples_v, samples_v_polar, samples_v_azimuthal)
 
 
-#   A struct of array was calculated for sampling, but an array of structs is needed for simulation (x, y, z together).
-positions = transpose(positions)
-velocities = transpose(velocities)
-
+#   A struct of arrays was calculated for sampling, but an array of structs is needed for simulation (x, y, z together).
+#   The numpy transpose function will try and be smart and just change the type from row major to column major instead
+#   of actually transposing, so need turn it back into row major.
+positions = ascontiguousarray(transpose(positions))
+velocities = ascontiguousarray(transpose(velocities))
 
 if file_format == 'vtu':
     N_Body_vtu('king').write(positions, velocities)
