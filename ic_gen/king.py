@@ -66,7 +66,7 @@ G = 1
 N = 512
 
 #   The number of stars to sample.
-n = 8192
+n = 32768
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be
 #   accidentally chosen too small in the numerical evaluation to reach that distance. The r_max variable is the maximum
@@ -190,8 +190,8 @@ elif file_format == 'h5':
 #   Histogram showing correlation between distance and velocity magnitude.
 if 'histogram' in sys.argv:
     import matplotlib.pyplot as plt
-    plt.hist2d(samples_r, samples_v, bins=24)
+    plt.hexbin(samples_r, samples_v, gridsize=24)
     plt.xlabel('distance')
     plt.ylabel('velocity magnitude')
     plt.colorbar()
-    plt.savefig(name + '.svg')
+    plt.savefig(name + '.pdf')
