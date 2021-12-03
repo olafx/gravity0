@@ -26,6 +26,8 @@ from numpy import pi, sqrt, e, exp, sin, cos, arccos, linspace, random, array, e
 from scipy.special import erf
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+import sys
 
 #   Writers.
 from n_body_vtu import N_Body_vtu
@@ -49,7 +51,6 @@ The sampling is done via uniform rejection sampling. Since the probability distr
 evaluated, rejection sampling is likely the most accurate and fastest sampling method for this problem (although uniform
 definitely isn't).
 '''
-
 
 #   Make RNG reproducible by creating a generator with seed 0.
 generator = random.default_rng(0)
@@ -78,15 +79,12 @@ r_max = 10
 #   File name.
 filename = '0.vtu'
 
-#   The name of the dataset.
-dataset_name = 'ic'
-
 #   If the potential reaches 0 too fast, interpolation is inaccurate. This is the minimum number of steps to reach the
 #   boundary that is acceptable, otherwise program gives a warning.
 threshold_steps_to_boundary = 128
 
 
-file_format = filename.rsplit('.')[-1]
+name, file_format = filename.rsplit('.', 1)
 if file_format not in ['h5', 'vtu']:
     raise Exception('file format not supported')
 
@@ -127,7 +125,8 @@ while sol.y[0, i] < 0:
     if i == N:
         raise RuntimeError("can't continue since r0 > r_max")
 
-print(f'{i} steps to boundary')
+if 'info' in sys.argv:
+    print(f'{i} steps to boundary')
 
 if i < threshold_steps_to_boundary:
     raise RuntimeWarning('steps to boundary too small; reduce r_max and/or increase N')
@@ -154,7 +153,8 @@ while i < n:
         i += 1
     attempts += 1
 
-print(f'{n / attempts * 100:.2f}% sampling efficiency')
+if 'info' in sys.argv:
+    print(f'{n / attempts * 100:.2f}% sampling efficiency')
 
 
 #   The sampling above did not include directional data. Position and velocity are isotropically distributed.
@@ -182,6 +182,16 @@ positions = ascontiguousarray(transpose(positions))
 velocities = ascontiguousarray(transpose(velocities))
 
 if file_format == 'vtu':
-    N_Body_vtu('king').write(positions, velocities)
+    N_Body_vtu(name).write(positions, velocities)
 elif file_format == 'h5':
-    N_Body_h5('king').write(positions, velocities)
+    N_Body_h5(name).write(positions, velocities)
+
+
+#   Histogram showing correlation between distance and velocity magnitude.
+if 'histogram' in sys.argv:
+    import matplotlib.pyplot as plt
+    plt.hist2d(samples_r, samples_v, bins=24)
+    plt.xlabel('distance')
+    plt.ylabel('velocity magnitude')
+    plt.colorbar()
+    plt.savefig(name + '.svg')
