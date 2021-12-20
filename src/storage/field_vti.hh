@@ -47,15 +47,12 @@ struct Field_vti
     std::size_t time_count = 0;
     std::string name_no_suffix;
 
-    //  VTK uses integers for counts and doesn't mark data pointer for writing const
     Field_vti(std::string name, double *const data, const std::array<int, order>& dims)
         : name_no_suffix {std::move(name)}
     {
         importer->SetDataSpacing(1, 1, 1);
         importer->SetDataOrigin(0, 0, 0);
-        importer->SetWholeExtent(0, dims[0] - 1,
-                                     0, dims[1] - 1,
-                                     0, order == 2 ? 0 : dims[2] - 1);
+        importer->SetWholeExtent(0, dims[0] - 1, 0, dims[1] - 1, 0, order == 2 ? 0 : dims[2] - 1);
         importer->SetDataExtentToWholeExtent();
         importer->SetDataScalarType(VTK_DOUBLE);
         importer->SetNumberOfScalarComponents(1);

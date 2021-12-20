@@ -49,7 +49,6 @@ struct N_Body_vtu
     std::size_t time_count;
     std::string name_no_suffix;
 
-    //  VTK uses integers for counts and doesn't mark data pointer for writing const
     N_Body_vtu(std::string name, double *const data, const int n)
         : time_count {0}, name_no_suffix {std::move(name)}
     {

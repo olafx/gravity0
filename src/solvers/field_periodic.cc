@@ -23,8 +23,9 @@
 */
 
 #include "field_periodic.hh"
-#include "../storage/field_vti.hh"
-#include "../storage/n_body_vtu.hh"
+#include "field_vti.hh"
+#include "n_body_vtu.hh"
+#include "n_body_h5.hh"
 #include <random>
 
 int main()
@@ -33,26 +34,43 @@ int main()
     std::mt19937_64 mt {rd()};
     std::uniform_real_distribution<> dist {0, 1};
 
-    std::array<int, 2> dims {5, 5};
-    auto *data_1 = new double[dims[0] * dims[1]];
-    Storage::Field_vti<4, 2> storage_1 {"field", data_1, dims};
-    for (std::size_t i = 0; i < 10; i++)
-    {   for (std::size_t j = 0; j < dims[0] * dims[1]; j++)
-            data_1[j] = sqrt(.2 * i) + j;
-        storage_1.write(.1 * i);
+
+    {   
+        std::array<int, 2> dims {5, 5};
+        constexpr std::size_t steps_per_file = 4;
+        std::size_t n_files = 3;
+        std::size_t offset  = 1;
+
+        auto *data = new double[dims[0] * dims[1]];
+
+        Storage::Field_vti<steps_per_file> storage {"field", data, dims};
+
+        for (std::size_t i = 0; i < steps_per_file * n_files - offset; i++)
+        {   for (std::size_t j = 0; j < dims[0] * dims[1]; j++)
+                data[j] = sqrt(.2 * i) + j;
+            storage.write(.1 * i);
+        }
+
+        delete[] data;
     }
 
-    int size = 256;
-    auto *data_2 = new double[3 * size];
-    Storage::N_Body_vtu<512> storage_2 {"n_body", data_2, size};
-    for (std::size_t i = 0; i < 512 * 8; i++)
-    {   for (std::size_t j = 0; j < 3 * size; j++)
-            data_2[j] = dist(mt);
-        storage_2.write(.1 * i);
+
+    {   int size = 3;
+
+        constexpr std::size_t steps_per_file = 5;
+        std::size_t n_files = 9;
+        std::size_t offset  = 1;
+
+        auto *data = new double[3 * size];
+
+        Storage::N_Body_vtu<steps_per_file> storage {"n_body", data, size};
+
+        for (std::size_t i = 0; i < steps_per_file * n_files - offset; i++)
+        {   for (std::size_t j = 0; j < 3 * size; j++)
+                data[j] = dist(mt);
+            storage.write(.1 * i);
+        }
+
+        delete[] data;
     }
-
-    std::cout << data_2 << '\n';
-
-    delete[] data_1;
-    delete[] data_2;
 }
