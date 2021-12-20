@@ -66,7 +66,7 @@ G = 1
 N = 512
 
 #   The number of stars to sample.
-n = 32768
+n = 16
 
 #   In principle the previous variables define at what distance V hits 0, but the range of distances may be
 #   accidentally chosen too small in the numerical evaluation to reach that distance. The r_max variable is the maximum
@@ -77,7 +77,7 @@ n = 32768
 r_max = 10
 
 #   File name.
-filename = '0.vtu'
+filename = 'king.h5'
 
 #   If the potential reaches 0 too fast, interpolation is inaccurate. This is the minimum number of steps to reach the
 #   boundary that is acceptable, otherwise program gives a warning.

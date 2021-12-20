@@ -49,7 +49,7 @@ A 'time ranges' dataset is stored in root containing the last time in each datas
 
 class N_Body_h5:
 
-    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 2**14, time_chunk_size: int = 2**8):
+    def __init__(self, name: str, n_times: int = 1, time_group_size: int = 256, time_chunk_size: int = 16):
         self.fp = h5py.File(name + '.h5', 'w', libver='latest')
         self.time_count = 0
         #   The only reason # of times is used is https://github.com/h5py/h5py/issues/2007.
@@ -93,11 +93,9 @@ class N_Body_h5:
             #   Time for a new group.
             group = self.fp.create_group(str(self.time_count // self.time_group_size))
             #   'pos' and 'vel' are extendible too.
-            group.create_dataset('pos', shape=(0, n, 3), maxshape=(None, n, 3),
-                                 chunks=(self.time_chunk_size, n, 3), dtype=np.float64, compression='szip')
+            group.create_dataset('pos', shape=(0, n, 3), maxshape=(None, n, 3), chunks=(self.time_chunk_size, n, 3), dtype=np.float64, compression='szip')
             if velocities is not None:
-                group.create_dataset('vel', shape=(0, n, 3), maxshape=(None, n, 3),
-                                     chunks=(self.time_chunk_size, n, 3), dtype=np.float64, compression='szip')
+                group.create_dataset('vel', shape=(0, n, 3), maxshape=(None, n, 3), chunks=(self.time_chunk_size, n, 3), dtype=np.float64, compression='szip')
         else:
             group = self.fp['/' + str(self.time_count // self.time_group_size)]
         self.times[self.time_count % self.time_group_size] = time
@@ -130,7 +128,7 @@ if __name__ == '__main__':
     #   Test with velocities over multiple times.
     n_times = 7
     times = np.linspace(0, 1, n_times)
-    writer = N_Body_h5('1', n_times, 5)
+    writer = N_Body_h5('1', n_times)
     for time in times:
         positions = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
