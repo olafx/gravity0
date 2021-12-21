@@ -13,4 +13,11 @@ Sampling realistic tidally limited star clusters. (King 1966)
 
 <img src="https://raw.githubusercontent.com/olafx/gravity0/master/renders/King_1.png" width="600">
 <img src="https://raw.githubusercontent.com/olafx/gravity0/master/renders/King_2.png" width="600">
-<img src="https://raw.githubusercontent.com/olafx/gravity0/master/renders/1.gif" width="600">
+
+
+## Integration
+
+
+## Other
+
+[Video](https://www.youtube.com/watch?v=YK2P9lmcxrs).
