@@ -92,7 +92,3 @@ if __name__ == '__main__':
         positions = generator.normal(0, 1, (n, 3))
         velocities = generator.normal(0, 1, (n, 3))
         writer.write(positions, velocities, time)
-
-    #   Test without velocities and one time.
-    positions = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
-    N_Body_vtu('0').write(positions)

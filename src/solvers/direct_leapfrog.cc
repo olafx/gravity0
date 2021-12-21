@@ -24,30 +24,33 @@
 
 #include "direct_leapfrog.hh"
 #include "n_body_h5.hh"
+#include "n_body_vtu.hh"
 #include <fmt/core.h>
 
 int main()
 {
-    /* number of time steps  */ constexpr std::size_t n_t = 300000;
+    /* number of time steps  */ constexpr std::size_t n_t = 1000000;
     /* steps between process */ constexpr std::size_t n_s = 1000;
-    /* time step             */ constexpr double dt   = 1e-5;
+    /* time step             */ constexpr double dt   = 1e-6;
     /* softening eps^2       */ constexpr double eps2 = 3e-5;
-    /* h5 file with init con */ Storage::N_Body_h5 storage {"king"};
+    /* h5 file with init con */ Storage::N_Body_vtu storage {"king"};
     /* number of objs        */ std::size_t n = storage.n_objects();
     /* integrator memory     */ auto *state = new double[6 * n];
-    /* store vel also?       */ constexpr bool store_velocities = false;
+    /* store vel also?       */ constexpr bool store_velocities = true;
 
 
     //  read ic, pos and vel
     storage.read(state, state + 3 * n);
 
 
+    //  vel buffer was set by 'read', so need explicit 'no_vel' to not update
+    if constexpr (!store_velocities)
+        storage.no_vel();
+
+
     //  process state function
     auto process = [&](std::size_t s)
-    {   if constexpr (store_velocities)
-            storage.write(state, state + 3 * n, s * dt);
-        else
-            storage.write(state, s * dt);
+    {   storage.write(s * dt);
         fmt::print("{}/{}\n", s, n_t);
     };
 

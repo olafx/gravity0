@@ -19,6 +19,6 @@ target_include_directories(direct_verlet   PRIVATE src/solvers src/storage ${HDF
 target_include_directories(direct_leapfrog PRIVATE src/solvers src/storage ${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
 target_include_directories(field_periodic  PRIVATE src/solvers src/storage ${HDF5_CXX_INCLUDE_DIRS} ${fmt_INCLUDE_DIRS})
 
-target_link_libraries(direct_verlet   PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES}                  fmt::fmt)
-target_link_libraries(direct_leapfrog PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES}                  fmt::fmt)
+target_link_libraries(direct_verlet   PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
+target_link_libraries(direct_leapfrog PRIVATE OpenMP::OpenMP_CXX ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
 target_link_libraries(field_periodic  PRIVATE                    ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${VTK_LIBRARIES} fmt::fmt)
