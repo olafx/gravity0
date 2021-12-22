@@ -49,11 +49,11 @@ class N_Body_vtu
 {
     vtkXMLUnstructuredGridWriter *writer = NULL;
     vtkXMLUnstructuredGridReader *reader = NULL;
-    vtkUnstructuredGrid *grid = NULL;
-    vtkPoints *points = NULL;
-    vtkDoubleArray *pos = NULL;
-    vtkDoubleArray *vel = NULL;
-    vtkIdType n_objs = 0;
+    vtkUnstructuredGrid          *grid   = NULL;
+    vtkPoints                    *points = NULL;
+    vtkDoubleArray               *pos = NULL;
+    vtkDoubleArray               *vel = NULL;
+    vtkIdType   n_objs     = 0;
     std::size_t time_count = 0;
     std::string name_no_suffix;
 
@@ -74,7 +74,7 @@ class N_Body_vtu
     void pre_write()
     {
         writer = vtkXMLUnstructuredGridWriter::New();
-        grid = vtkUnstructuredGrid::New();
+        grid   = vtkUnstructuredGrid::New();
         points = vtkPoints::New();
         pos = vtkDoubleArray::New();
         vel = vtkDoubleArray::New();
@@ -143,10 +143,10 @@ public:
             pre_read();
 
         double *pos_raw = pos->GetPointer(0);
+        double *vel_raw = vel->GetPointer(0);
+
         for (std::size_t i = 0; i < 3 * n_objs; i++)
             pos_buffer[i] = pos_raw[i];
-
-        double *vel_raw = vel->GetPointer(0);
         for (std::size_t i = 0; i < 3 * n_objs; i++)
             vel_buffer[i] = vel_raw[i];
 
@@ -189,7 +189,7 @@ public:
             writer->Start();
         }
 
-        points->Modified(); // should also work with pos, which is nicer than points
+        pos->Modified();
         if (vel != NULL)
             vel->Modified();
         writer->WriteNextTime(time);
