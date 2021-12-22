@@ -110,7 +110,19 @@ public:
     ~N_Body_vtu()
     {
         if (writer != NULL)
+        {
             writer->Stop();
+
+            pos->Delete();
+            vel->Delete();
+            points->Delete();
+            grid->Delete();
+            writer->Delete();
+        }
+        if (reader != NULL)
+        {
+            reader->Delete();
+        }
     }
 
 
