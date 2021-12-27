@@ -23,61 +23,183 @@
 */
 
 #pragma once
-#include <vtkNew.h>
 #include <vtkImageData.h>
 #include <vtkImageImport.h>
 #include <vtkXMLImageDataWriter.h>
+#include <vtkXMLImageDataReader.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+#include <vtkAbstractArray.h>
 #include <string>
-#include <array>
 #include <type_traits>
 #include <utility>
+#include <algorithm>
 #include <fmt/format.h>
+
+#include <iostream> // TODO temp
 
 namespace Storage
 {
 
 //  time dependent 2D or 3D uniform grid storage via VTK image format (multiple files, time stored)
+//  TODO
+//    - Figure out how to read TimeValues (written by WriteNextTime) rather than TimeStep, which is an integer count.
+//      Can then implement multi time step and custom time initial condition reading.
 
-template <std::size_t time_steps_per_file = 16384, std::size_t order = 2,
+template <std::size_t time_steps_per_file = 256, std::size_t order = 2,
           typename = std::enable_if_t<order == 2 || order == 3>>
-struct Field_vti
+class Field_vti
 {
-    vtkNew<vtkXMLImageDataWriter> writer;
-    vtkNew<vtkImageImport> importer;
+    vtkXMLImageDataWriter *writer   = NULL;
+    vtkXMLImageDataReader *reader   = NULL;
+    vtkImageData          *image    = NULL;
+    vtkDoubleArray        *rho      = NULL;
+    vtkDoubleArray        *vel      = NULL;
+    std::array<int, order> res;
     std::size_t time_count = 0;
     std::string name_no_suffix;
 
-    Field_vti(std::string name, double *const data, const std::array<int, order>& dims)
-        : name_no_suffix {std::move(name)}
-    {
-        importer->SetDataSpacing(1, 1, 1);
-        importer->SetDataOrigin(0, 0, 0);
-        importer->SetWholeExtent(0, dims[0] - 1, 0, dims[1] - 1, 0, order == 2 ? 0 : dims[2] - 1);
-        importer->SetDataExtentToWholeExtent();
-        importer->SetDataScalarType(VTK_DOUBLE);
-        importer->SetNumberOfScalarComponents(1);
-        importer->SetImportVoidPointer(data);
 
-        writer->SetInputConnection(importer->GetOutputPort());
+    void pre_read()
+    {
+        image = vtkImageData::SafeDownCast(reader->GetOutputDataObject(0));
+
+        rho = vtkDoubleArray::SafeDownCast(image->GetPointData()->GetAbstractArray("Density"));
+        vel = vtkDoubleArray::SafeDownCast(image->GetPointData()->GetAbstractArray("Velocity"));
+
+        int extent[6];
+        image->GetExtent(extent);
+
+        res[0] = extent[1] + 1;
+        res[1] = extent[3] + 1;
+        if constexpr (order == 3)
+            res[2] = extent[5] + 1;
+
+        // reader->GetTimeStep();
+        // reader->SetTimeStep();
+        // reader->GetNumberOfTimeSteps();
+    }
+
+
+    void pre_write()
+    {
+        writer = vtkXMLImageDataWriter::New();
+        image  = vtkImageData::New();
+        rho    = vtkDoubleArray::New();
+        vel    = vtkDoubleArray::New();
+
+        rho->SetName("Density");
+        rho->SetNumberOfComponents(1);
+
+        vel->SetName("Velocity");
+        vel->SetNumberOfComponents(3);
+
+        image->GetPointData()->SetScalars(rho);
+        image->GetPointData()->AddArray(vel);
+        image->SetExtent(0, res[0] - 1, 0, res[1] - 1, 0, order == 3 ? res[2] - 1 : 0);
+
+        writer->SetInputData(image);
         writer->SetNumberOfTimeSteps(time_steps_per_file);
     }
+
+
+public:
+
+    explicit Field_vti(std::string name)
+        : name_no_suffix {std::move(name)}
+    {
+        reader = vtkXMLImageDataReader::New();
+        reader->SetFileName((name_no_suffix + ".vti").c_str());
+        reader->Update();
+    }
+
+
+    ~Field_vti()
+    {
+        if (writer != NULL)
+        {
+            writer->Stop();
+
+            rho->Delete();
+            if (vel != NULL)
+                vel->Delete();
+            image->Delete();
+            writer->Delete();
+        }
+        if (reader != NULL)
+        {
+            reader->Delete();
+        }
+    }
+
+
+    std::array<int, order> resolution()
+    {
+        if (image == NULL)
+            pre_read();
+
+        return res;
+    }
+
+
+    void read(double *const rho_buffer, double *const vel_buffer)
+    {
+        if (image == NULL)
+            pre_read();
+        
+        double *rho_raw = rho->GetPointer(0);
+        double *vel_raw = vel->GetPointer(0);
+
+        for (std::size_t i = 0; i < res[0] * res[1] * (order == 3 ? res[2] : 1); i++)
+            rho_buffer[i] = rho_raw[i];
+        for (std::size_t i = 0; i < res[0] * res[1] * (order == 3 ? res[2] : 1) * 3; i++)
+            vel_buffer[i] = vel_raw[i];
+
+        reader->Delete();
+        reader = NULL;
+
+        pre_write();
+        set_buffers(rho_buffer, vel_buffer);
+        write(0);
+    }
+
+
+    void set_buffer(double *const rho_buffer)
+    {
+        rho->SetVoidArray(rho_buffer, res[0] * res[1] * (order == 3 ? res[2] : 1), 1);
+    }
+
+
+    void set_buffers(double *const rho_buffer, double *const vel_buffer)
+    {
+        rho->SetVoidArray(rho_buffer, res[0] * res[1] * (order == 3 ? res[2] : 1)    , 1);
+        vel->SetVoidArray(vel_buffer, res[0] * res[1] * (order == 3 ? res[2] : 1) * 3, 1);
+    }
+
+
+    void no_vel()
+    {
+        vel->Delete();
+        vel = NULL;
+    }
+
 
     void write(const double time)
     {
         if (time_count % time_steps_per_file == 0)
-        {   if (time_count != 0)
+        {
+            if (time_count != 0)
                 writer->Stop();
+
             writer->SetFileName(fmt::format("{}_{:04d}.vti", name_no_suffix, time_count / time_steps_per_file).c_str());
             writer->Start();
         }
-        importer->Modified();
+
+        rho->Modified();
+        if (vel != NULL)
+            vel->Modified();
         writer->WriteNextTime(time);
         time_count++;
-    }
-
-    ~Field_vti()
-    {
-        writer->Stop();
     }
 };
 
