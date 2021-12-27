@@ -23,7 +23,6 @@
 */
 
 #pragma once
-#include <vtkNew.h>
 #include <vtkPoints.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -42,7 +41,6 @@ namespace Storage
 //  TODO
 //    - Figure out how to read TimeValues (written by WriteNextTime) rather than TimeStep, which is an integer count.
 //      Can then implement multi time step and custom time initial condition reading.
-//    - Deallocation. It's leaking.
 
 template <std::size_t time_steps_per_file = 256>
 class N_Body_vtu
@@ -51,9 +49,9 @@ class N_Body_vtu
     vtkXMLUnstructuredGridReader *reader = NULL;
     vtkUnstructuredGrid          *grid   = NULL;
     vtkPoints                    *points = NULL;
-    vtkDoubleArray               *pos = NULL;
-    vtkDoubleArray               *vel = NULL;
-    vtkIdType   n_objs     = 0;
+    vtkDoubleArray               *pos    = NULL;
+    vtkDoubleArray               *vel    = NULL;
+    vtkIdType   n_objs;
     std::size_t time_count = 0;
     std::string name_no_suffix;
 
@@ -65,8 +63,10 @@ class N_Body_vtu
         pos = vtkDoubleArray::SafeDownCast(grid->GetPoints()->GetData());
         vel = vtkDoubleArray::SafeDownCast(grid->GetPointData()->GetAbstractArray("Velocity"));
 
+        n_objs = grid->GetNumberOfPoints();
+
         // reader->GetTimeStep();
-        // reader->SetTimeStep()
+        // reader->SetTimeStep();
         // reader->GetNumberOfTimeSteps();
     }
 
@@ -76,13 +76,13 @@ class N_Body_vtu
         writer = vtkXMLUnstructuredGridWriter::New();
         grid   = vtkUnstructuredGrid::New();
         points = vtkPoints::New();
-        pos = vtkDoubleArray::New();
-        vel = vtkDoubleArray::New();
+        pos    = vtkDoubleArray::New();
+        vel    = vtkDoubleArray::New();
 
         pos->SetNumberOfComponents(3);
 
-        vel->SetNumberOfComponents(3);
         vel->SetName("Velocity");
+        vel->SetNumberOfComponents(3);
 
         points->SetDataType(VTK_DOUBLE);
         points->SetNumberOfPoints(n_objs);
@@ -114,7 +114,8 @@ public:
             writer->Stop();
 
             pos->Delete();
-            vel->Delete();
+            if (vel != NULL)
+                vel->Delete();
             points->Delete();
             grid->Delete();
             writer->Delete();
@@ -128,11 +129,9 @@ public:
 
     vtkIdType n_objects()
     {
-        if (n_objs == 0)
-        {   if (grid == NULL)
-                pre_read();
-            n_objs = grid->GetNumberOfPoints();
-        }
+        if (grid == NULL)
+            pre_read();
+
         return n_objs;
     }
 
@@ -174,6 +173,7 @@ public:
 
     void no_vel()
     {
+        vel->Delete();
         vel = NULL;
     }
 
