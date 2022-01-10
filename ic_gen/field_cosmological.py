@@ -53,7 +53,6 @@ def field_cosmological(size: int, n_dims: int, power: float):
         return numpy.fft.ifft2(noise * amplitude).real
     elif n_dims == 3:
         k_i = numpy.fft.fftshift(numpy.mgrid[:size, :size, :size] - (size + 1) // 2)
-        amplitude = numpy.power(k_i[0]**2 + k_i[1]**2 + k_i[2]**2, - .5 * power)
         amplitude = (k_i[0]**2 + k_i[1]**2 + k_i[3]**2) ** (.5 * power)
         del k_i
         amplitude[0,0,0] = 0
