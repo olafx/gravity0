@@ -27,51 +27,56 @@ from vtk.util.numpy_support import *
 import numpy as np
 
 '''
-Create a vtk XML unstructured grid file (.vtu) from an initial condition.
+Create a vtk XML image file (.vti) from an initial condition.
 An initial condition can optionally contain velocities and describe multiple times.
 '''
 
 
-class N_Body_vtu:
+class Field_vti:
 
     def __init__(self, name: str, n_times: float = 1):
-        self.writer = vtkXMLUnstructuredGridWriter()
-        self.grid = vtkUnstructuredGrid()
-        self.points = vtkPoints()
-        #   Points are represented by positions.
-        self.positions = vtkDoubleArray()
+        self.writer = vtkXMLImageDataWriter()
+        self.image = vtkImageData()
+        self.densities = vtkDoubleArray()
         self.time_count = 0
         self.n_times = n_times
-        self.positions.SetNumberOfComponents(3)
-        #   Grid contains points (which themselves contain positions).
-        self.points.SetData(self.positions)
-        self.grid.SetPoints(self.points)
-        self.writer.SetFileName(name + '.vtu')
-        self.writer.SetInputData(self.grid)
+        self.densities.SetNumberOfComponents(1)
+        self.densities.SetName('Density')
+        #   Image contains point data (which itself contains densities).
+        self.image.GetPointData().SetScalars(self.densities)
+        self.writer.SetFileName(name + '.vti')
+        self.writer.SetInputData(self.image)
         self.writer.SetNumberOfTimeSteps(self.n_times)
 
-    def write(self, positions: np.ndarray, velocities: np.ndarray = None, time: float = 0):
-        if velocities is not None:
-            if positions.size != velocities.size:
-                raise BufferError('positions and velocities should have a consistent shape')
+    def write(self, densities: np.ndarray, velocities: np.ndarray = None, time: float = 0):
+        if len(densities.shape) != 3 or velocities is not None and len(velocities.shape) != 4:
+            raise BufferError('data has the wrong order')
+        if velocities is not None and densities.shape != velocities.shape[:-1]:
+            raise BufferError('densities and velocities should have a consistent shape')
         if self.time_count == 0:
+            #   Need to set the image extent still.
+            shape = densities.shape
+            self.image.SetExtent(0, shape[0] - 1, 0, shape[1] - 1, 0, shape[2] - 1)
             if velocities is not None:
                 #   Can only know now the user wants velocities.
                 #   Velocities are represented by point data.
                 self.velocities = vtkDoubleArray()
                 self.velocities.SetName('Velocity')
                 self.velocities.SetNumberOfComponents(3)
-                #   Grid stores velocities as point data. Need to add an array, can
+                #   Image stores velocities as point data. Need to add an array, can
                 #   in general have multiple point data arrays, or 'attributes' as in Xdmf3.
-                self.grid.GetPointData().AddArray(self.velocities)
+                self.image.GetPointData().AddArray(self.velocities)
             self.writer.Start()
         #   Update data. The 1 signifies not to deallocate. (Makes more sense in C++.)
-        self.positions.SetArray(numpy_to_vtk(positions), positions.size, 1)
+        #   Needs to be flattened because numpy_to_vtk only works up to order 2. This is because it's supposed to
+        #   receive an array of vectors in general, which is in this case an array of scalars.
+        self.densities.SetArray(numpy_to_vtk(densities.flatten()), densities.size, 1)
         #   Signal that data has been modified so that new time gets its own data
         #   rather than referencing the data from the previous time.
-        self.positions.Modified()
+        self.densities.Modified()
         if velocities is not None:
-            self.velocities.SetArray(numpy_to_vtk(velocities), velocities.size, 1)
+            #   Needs to be flattened also, but this time to obtain an array of size 3 vectors.
+            self.velocities.SetArray(numpy_to_vtk(velocities.reshape(velocities.size // 3, 3)), velocities.size, 1)
             self.velocities.Modified()
         self.writer.WriteNextTime(time)
         self.time_count += 1
@@ -87,8 +92,8 @@ if __name__ == '__main__':
     #   Test with velocities over multiple times.
     n_times = 4
     times = np.linspace(0, 1, n_times)
-    writer = N_Body_vtu('1', n_times)
+    writer = Field_vti('1', n_times)
     for time in times:
-        positions = generator.normal(0, 1, (n, 3))
-        velocities = generator.normal(0, 1, (n, 3))
-        writer.write(positions, velocities, time)
+        densities = generator.normal(0, 1, (n, n, n))
+        velocities = generator.normal(0, 1, (n, n, n, 3))
+        writer.write(densities, velocities, time)
