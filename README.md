@@ -15,7 +15,18 @@ Sampling realistic tidally limited star clusters. (King 1966)
 <img src="https://raw.githubusercontent.com/olafx/gravity0/master/renders/King_2.png" width="600">
 
 
+## Cosmological Quantum Fluctuations
+
+These can be generated too for periodic field based cosmological solvers, in 2D or 3D.
+
+<img src="https://raw.githubusercontent.com/olafx/gravity0/master/renders/Cosmological.png" width="600">
+
+
 ## Integration
+
+Only implemented basic integrators so far. (n-body leapfrog and Verlet)
+Field based periodic cosmological integrator coming up next. Hoping to produce a 3D cosmic web and some great 2D detail.
+Also want to make some time adaptive and faster-than-quadratic n-body solvers.
 
 
 ## Other
