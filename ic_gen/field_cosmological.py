@@ -24,6 +24,7 @@ SOFTWARE.
 
 import sys
 import numpy
+import scipy.fft
 
 '''
 Generate a square or cubic Gaussian random field with a negative power law as power spectrum.
@@ -33,8 +34,8 @@ so is ideal as a field based cosmological initial condition depicting local dens
 can also be used, but need to follow with the Zel'dovich approximation to get particle position offsets from the density
 variations (see doi: 10.1063/1.4822978).
 
-e.g. python field_cosmological.py 2 4096 -1.3
-e.g. python field_cosmological.py 3 512 -2 plot
+e.g. python field_cosmological.py 2 4096 -1.3 plot store ic
+e.g. python field_cosmological.py 3 256 -2 plot
 
 TODO
     Doesn't write data yet because don't have a Python based .vti writer yet.
@@ -53,12 +54,12 @@ def field_cosmological(size: int, n_dims: int, power: float):
         return numpy.fft.ifft2(noise * amplitude).real
     elif n_dims == 3:
         k_i = numpy.fft.fftshift(numpy.mgrid[:size, :size, :size] - (size + 1) // 2)
-        amplitude = (k_i[0]**2 + k_i[1]**2 + k_i[3]**2) ** (.5 * power)
+        amplitude = (k_i[0]**2 + k_i[1]**2 + k_i[2]**2) ** (.5 * power)
         del k_i
         amplitude[0,0,0] = 0
         noise = generator.normal(size=(size, size, size)) \
          + 1j * generator.normal(size=(size, size, size))
-        return numpy.fft.ifft2(noise * amplitude).real
+        return numpy.fft.ifftn(noise * amplitude).real
 
 
 if __name__ == '__main__':
@@ -66,10 +67,13 @@ if __name__ == '__main__':
         exit(1)
     n_dims = int(sys.argv[1])
     size = int(sys.argv[2])
-    power = -2 if len(sys.argv) < 4 or sys.argv[3] == 'plot' else float(sys.argv[3])
+    power = float(sys.argv[3])
     data = field_cosmological(size, n_dims, power)
     if 'plot' in sys.argv:
         import matplotlib.pyplot as plt
         plt.imshow(data if n_dims == 2 else data[size // 2])
         plt.title(f'power {power}, region {size}^{n_dims}')
         plt.show()
+    if 'store' in sys.argv:
+        from field_vti import Field_vti
+        Field_vti(sys.argv[sys.argv.index('store') + 1]).write(data)
