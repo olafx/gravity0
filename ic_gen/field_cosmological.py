@@ -36,9 +36,6 @@ variations (see doi: 10.1063/1.4822978).
 
 e.g. python field_cosmological.py 2 4096 -1.3 plot store ic
 e.g. python field_cosmological.py 3 256 -2 plot
-
-TODO
-    Doesn't write data yet because don't have a Python based .vti writer yet.
 '''
 
 generator = numpy.random.default_rng(0)

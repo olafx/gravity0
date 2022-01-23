@@ -59,7 +59,6 @@ class Field_vti:
         if self.time_count == 0:
             #   Need to set the image extent still.
             shape = densities.shape
-            
             self.image.SetExtent(0, shape[0] - 1, 0, shape[1] - 1, 0, 0 if len(shape) == 2 else shape[2] - 1)
             if velocities is not None:
                 #   Can only know now the user wants velocities.
