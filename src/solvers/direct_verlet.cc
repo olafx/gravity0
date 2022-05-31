@@ -24,34 +24,30 @@
 
 #include "direct_verlet.hh"
 #include "n_body_h5.hh"
-#include <fmt/core.h>
 
 int main()
 {
-    /* number of time steps  */ constexpr std::size_t n_t = 300000;
-    /* steps between process */ constexpr std::size_t n_s = 1000;
+    /* number of time steps  */ constexpr size_t n_t = 300000;
+    /* steps between process */ constexpr size_t n_s = 1000;
     /* time step             */ constexpr double dt   = 1e-5;
     /* softening eps ^2      */ constexpr double eps2 = 3e-5;
-    /* h5 file with init con */ Storage::N_Body_h5 storage {"king"};
-    /* number of objs        */ std::size_t n = storage.n_objects();
+    /* h5 file with ic       */ Storage::N_Body_h5 storage {"king"};
+                                size_t n = storage.n_objects();
     /* integrator memory     */ auto *ic    = new double[6 * n];
                                 auto *state = new double[6 * n];
     /* store vel also?       */ constexpr bool store_velocities = false;
 
-
     //  read ic, pos and vel
     storage.read(ic, ic + 3 * n);
 
-
     //  process state # s
-    auto process = [&](std::size_t s)
+    auto process = [&](size_t s)
     {   if constexpr (store_velocities)
             storage.write(state, state + 3 * n, s * dt);
         else
             storage.write(state, s * dt);
-        fmt::print("{}/{}\n", s, n_t);
+        printf("{%zu}/{%zu}\n", s, n_t);
     };
-
 
     //  initialization step
     Direct_Verlet::forward_init(ic, state, n, dt, eps2);
@@ -60,9 +56,8 @@ int main()
 
     delete[] ic;
 
-
     //  main loop
-    for (std::size_t s = 2; s <= n_t; s++)
+    for (size_t s = 2; s <= n_t; s++)
     {   Direct_Verlet::forward(state, n, dt, eps2);
         if (s % n_s == 0)
             process(s);

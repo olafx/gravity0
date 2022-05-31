@@ -24,39 +24,22 @@
 
 #pragma once
 #include <cmath>
+#include <cstring>
 
 namespace Direct_Verlet
 {
 
-/*  Direct Verlet
-
-    direct n-body solver
-    constant time step
-    3D
-    2 positions
-    0 velocities
-    symplectic
-    softening
-    2nd order in space
-    1st order in time
-    Taylor series initialization from 1 position 1 velocity data
-*/
-
 void forward_init(const double *const ic, double *const state,
-                  const std::size_t n, const double dt, const double eps2) noexcept
+                  const size_t n, const double dt, const double eps2) noexcept
 {
-    for (std::size_t i = 0; i < 3 *n; i++)
+    for (size_t i = 0; i < 3 * n; i++)
         state[i] = 0;
 
-    for (std::size_t i = 0; i < n; i++)
-    {   state[3*(i+n)  ] = ic[3*i  ];
-        state[3*(i+n)+1] = ic[3*i+1];
-        state[3*(i+n)+2] = ic[3*i+2];
-    }
+    memcpy(state + 3 * n, ic, 3 * n * sizeof(double));
 
     #pragma omp parallel for default(none) shared(n, state, ic, eps2, dt)
-    for (std::size_t i = 0; i < n; i++)
-    {   for (std::size_t j = 0; j < n; j++)
+    for (size_t i = 0; i < n; i++)
+    {   for (size_t j = 0; j < n; j++)
             if (i != j)
             {   const double b1 = state[3*(i+n)  ] - state[3*(j+n)  ];
                 const double b2 = state[3*(i+n)+1] - state[3*(j+n)+1];
@@ -78,14 +61,14 @@ void forward_init(const double *const ic, double *const state,
 
 
 void forward(double *const state,
-             const std::size_t n, const double dt, const double eps2) noexcept
+             const size_t n, const double dt, const double eps2) noexcept
 {
     #pragma omp parallel for default(none) shared(n, state, eps2, dt)
-    for (std::size_t i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {   double a1 = 0;
         double a2 = 0;
         double a3 = 0;
-        for (std::size_t j = 0; j < n; j++)
+        for (size_t j = 0; j < n; j++)
             if (i != j)
             {   const double b1 = state[3*i  ] - state[3*j  ];
                 const double b2 = state[3*i+1] - state[3*j+1];

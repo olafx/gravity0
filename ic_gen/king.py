@@ -77,7 +77,7 @@ n = 16
 r_max = 10
 
 #   File name.
-filename = 'king.h5'
+filename = 'king.vtu'
 
 #   If the potential reaches 0 too fast, interpolation is inaccurate. This is the minimum number of steps to reach the
 #   boundary that is acceptable, otherwise program gives a warning.

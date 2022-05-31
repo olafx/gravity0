@@ -28,11 +28,11 @@
 
 namespace Accurate_Sum
 {
-    double kahan_babuska(const double *const data, const std::size_t n)
+    double kahan_babuska(const double *const data, const size_t n)
     {
         double sum = data[0] + data[1];
         double com = sum - data[1];
-        for (std::size_t i = 2; i < n; i++)
+        for (size_t i = 2; i < n; i++)
         {   const double a = data[i] - com;
             const double b = sum + a;
             com = b - sum - a;
@@ -41,10 +41,17 @@ namespace Accurate_Sum
         return sum;
     }
 
-    template <std::size_t n_direct = 128>
-    double pairwise(const double *const data, const std::size_t n)
+    template <size_t n_direct = 128>
+    double pairwise(const double *const data, const size_t n)
     {
-        return n <= n_direct ? std::accumulate(date, data + n, 0) :
-                               pairwise<n_direct>(data, n / 2) + pairwise<n_direct>(data + n / 2, n / 2);
+        if (n <= n_direct)
+        {   double sum = 0;
+            for (size_t i = 0; i < n; i++)
+                sum += data[i];
+            return sum;
+        }
+        else
+        {   return pairwise<n_direct>(data, n / 2) + pairwise<n_direct>(data + n / 2, n / 2);
+        }
     }
 }

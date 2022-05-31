@@ -65,12 +65,13 @@ if __name__ == '__main__':
     n_dims = int(sys.argv[1])
     size = int(sys.argv[2])
     power = float(sys.argv[3])
-    data = field_cosmological(size, n_dims, power)
+    density = field_cosmological(size, n_dims, power)
     if 'plot' in sys.argv:
         import matplotlib.pyplot as plt
-        plt.imshow(data if n_dims == 2 else data[size // 2])
+        plt.imshow(density if n_dims == 2 else density[size // 2])
         plt.title(f'power {power}, region {size}^{n_dims}')
         plt.show()
     if 'store' in sys.argv:
         from field_vti import Field_vti
-        Field_vti(sys.argv[sys.argv.index('store') + 1]).write(data)
+        velocity = numpy.zeros([size, size, size, n_dims] if n_dims == 3 else [size, size, n_dims]);
+        Field_vti(sys.argv[sys.argv.index('store') + 1]).write(density, velocity)

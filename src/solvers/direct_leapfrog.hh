@@ -25,32 +25,18 @@
 #pragma once
 #include <cmath>
 
-/*  Direct Leapfrog
-
-    direct n-body solver
-    constant time step
-    3D
-    1 position
-    1 velocity
-    symplectic
-    softening
-    2nd order in space
-    1st order in time
-    no initializaion
-*/
-
 namespace Direct_Leapfrog
 {
 
-void forward(double *const state, const std::size_t n,
+void forward(double *const state, const size_t n,
              const double dt, const double eps2) noexcept
 {
     #pragma omp parallel for default(none) shared(n, state, eps2, dt)
-    for (std::size_t i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {   double a1 = 0;
         double a2 = 0;
         double a3 = 0;
-        for (std::size_t j = 0; j < n; j++)
+        for (size_t j = 0; j < n; j++)
             if (i != j)
             {   const double b1 = state[3*i  ] - state[3*j  ];
                 const double b2 = state[3*i+1] - state[3*j+1];
