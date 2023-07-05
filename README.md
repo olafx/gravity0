@@ -1,5 +1,7 @@
 # gravity0
 
+(This is old, see experiments0 instead.)
+
 A showcase of gravity solvers in C++, and initial condition generators in Python.
 
 For educational purposes.
